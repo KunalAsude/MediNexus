@@ -24,7 +24,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={cn('min-h-screen bg-dark-300 font-sans antialiased', fontSans.variable)}>
+        className={cn('min-h-screen bg-[linear-gradient(to_right,#042F2E,#012621,#002A1C)] font-sans antialiased', fontSans.variable)}>
         <ThemeProvider
             attribute="class"
             defaultTheme="dark"
