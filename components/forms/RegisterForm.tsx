@@ -323,7 +323,7 @@ const RegisterForm = ({ user }: { user: User }) => {
                 />
 
                 <SubmitButton isLoading={isLoading}>
-                    Get Started
+                    Submit and Continue
                 </SubmitButton>
             </form>
         </Form >
