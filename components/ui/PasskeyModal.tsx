@@ -32,20 +32,20 @@ const PasskeyModal = () => {
         router.push('/')
     }
 
-    const encryptedKey = typeof window !== 'undefined' ? window.localStorage.getItem('accessKey') : null;
+    //const encryptedKey = typeof window !== 'undefined' ? window.localStorage.getItem('accessKey') : null;
 
-    useEffect(() => {
-        const accessKey = encryptedKey && decryptKey(encryptedKey)
+    // useEffect(() => {
+    //     const accessKey = encryptedKey && decryptKey(encryptedKey)
 
-        if(path){
-            if (accessKey === process.env.NEXT_PUBLIC_ADMIN_PASSKEY) {
-                setOpen(false);
-                router.push('/admin')
-            } else {
-                setOpen(true)
-            }
-        }
-    }, [encryptedKey])
+    //     if(path){
+    //         if (accessKey === process.env.NEXT_PUBLIC_ADMIN_PASSKEY) {
+    //             setOpen(false);
+    //             router.push('/admin')
+    //         } else {
+    //             setOpen(true)
+    //         }
+    //     }
+    // }, [encryptedKey])
     
 
     const validatePasskey = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
@@ -54,6 +54,7 @@ const PasskeyModal = () => {
             const encryptedKey = encryptKey(passkey);
 
             localStorage.setItem('accessKey', encryptedKey)
+            router.push('/admin')
             setOpen(false);
         } else {
             setError('Invalid Passkey')

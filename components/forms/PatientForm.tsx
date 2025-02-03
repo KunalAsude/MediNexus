@@ -46,6 +46,7 @@ const PatientForm = () => {
         email: values.email,
         phone: values.phone,
       };
+      console.log('here')
       const newUser = await createUser(user);
       console.log(newUser)
       if (newUser) {

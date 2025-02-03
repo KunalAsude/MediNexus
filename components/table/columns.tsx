@@ -29,7 +29,7 @@ export const columns: ColumnDef<Appointment>[] = [
         accessorKey: "status",
         header: "Status",
         cell: ({ row }) => (
-            <div className="min-w-[115px]">
+            <div className="max-[50px]: flex justify-center">
                 <StatusBadge
                     //@ts-ignore
                     status={row.original.status}
@@ -48,22 +48,22 @@ export const columns: ColumnDef<Appointment>[] = [
     },
     {
         accessorKey: "primaryPhysician",
-        header: "Amount",
+        header: "Doctor",
         cell: ({ row }) => {
-            const doctor = Doctors.find((doc) => doc.name === row.original.primaryPhysician)
+            const doctor = Doctors.find((doc) => doc.name === row.original.primaryPhysician);
 
             return (
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-5 justify-center">
                     <Image
                         src={doctor?.image!}
                         alt="doctor"
-                        width={100}
-                        height={100}
-                        className="size-8"
+                        width={32}
+                        height={32}
+                        className="rounded-full object-cover"
                     />
-                    <p className="whitespace-nowrap">Dr. {doctor?.name}</p>
+                    <span className="text-sm font-medium">Dr. {doctor?.name}</span>
                 </div>
-            )
+            );
         },
     },
     {
@@ -71,7 +71,7 @@ export const columns: ColumnDef<Appointment>[] = [
         header: () => <div className="pl-4">Actions</div>,
         cell: ({ row: { original: data } }) => {
             return (
-                <div className="flex gap-1">
+                <div className="flex gap-4 justify-center ">
                     <AppointmentModal
                         type='schedule'
                         patientId={data.patient.$id}
@@ -86,7 +86,6 @@ export const columns: ColumnDef<Appointment>[] = [
                         patientId={data.patient.$id}
                         userId={data.userId}
                         appointment={data}
-
                     />
                 </div>
             )

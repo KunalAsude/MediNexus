@@ -36,20 +36,21 @@ export function DataTable<TData, TValue>({
   })
 
   return (
-    <div className="data-table">
+    <div className="data-table remove-scrollbar">
       <Table className="shad-table">
-        <TableHeader className="bg-dark-200">
+        <TableHeader className="bg-gradient-to-r from-[#003e34] to-[#003e34] items-center text-center">
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id} className="shad-table-row-header">
               {headerGroup.headers.map((header) => {
                 return (
-                  <TableHead key={header.id}>
+                  <TableHead key={header.id} className="text-center py-4">
                     {header.isPlaceholder
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
                           header.getContext()
                         )}
+                        
                   </TableHead>
                 )
               })}
@@ -62,10 +63,10 @@ export function DataTable<TData, TValue>({
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() && "selected"}
-                className="shad-table-row"
+                className="shad-table-row text-center"
               >
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
+                  <TableCell key={cell.id} className="py-3">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}

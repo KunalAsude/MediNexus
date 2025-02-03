@@ -11,7 +11,7 @@ const Admin = async() => {
     
     const appointments = await getRecentAppointmentList()
     return (
-        <div className='flex mx-auto max-w-7xl flex-col space-y-14'>
+        <div className='flex mx-auto max-w-full flex-col space-y-14'>
             <header className='admin-header'>
                 <Link href='/' className='cursor-pointer'>
                     <div className="flex flex-row align-middle">
@@ -27,13 +27,13 @@ const Admin = async() => {
                 </Link>
                 <p className='text-sm font-bold flex items-center justify-center text-teal-500'>Admin Dashboard</p>
             </header>
-            <main className='admin-main'>
-                <section className='w-full space-y-4'>
-                    <h1 className='header'>Welcome Admin</h1>
+            <main className='admin-main remove-scrollbar'>
+                <section className='w-full space-y-2'>
+                    <h1 className='text-2xl font-bold'>Welcome Admin</h1>
                     <p className='text-dark-700'> Start The Day With Managing New Appointments...</p>
                 </section>
 
-                <section className='admin-stat'>
+                <section className='admin-stat remove-scrollbar'>
                     <StatCard
                     type='appointments'
                     count={appointments.scheduledCount}
