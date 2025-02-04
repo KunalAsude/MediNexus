@@ -84,3 +84,16 @@ export const StatusIcon = {
   pending: "/assets/icons/pending.svg",
   cancelled: "/assets/icons/cancelled.svg",
 };
+
+export const hospitalImages: string[] = [
+  "https://images.pexels.com/photos/7563452/pexels-photo-7563452.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1", // Hospital Image 1
+  "https://images.pexels.com/photos/13548720/pexels-photo-13548720.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1", // Hospital Image 2
+  "https://images.pexels.com/photos/4006979/pexels-photo-4006979.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1", // Hospital Image 3
+];
+export const departments = [
+  "Cardiology",
+  "Neurology",
+  "Oncology",
+  "Pediatrics",
+  "Orthopedics",
+];

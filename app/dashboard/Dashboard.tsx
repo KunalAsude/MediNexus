@@ -16,12 +16,20 @@ export default function Home() {
         e.preventDefault(); // Prevent immediate navigation
 
         toast({
-            title: `${featureName} Under Construction`,
+            title: `${featureName} Under Maintenance`,
             description: `${featureName} is currently being built. Please check back later.`,
             variant: 'destructive', // Error style for toast
+            duration: 2000, // Auto-hide after 3 seconds
         });
+    };
 
-        // No redirection, links remain static
+    const handleLinkClick1 = (featureName: string) => {
+        toast({
+            title: `Processing Your Request!!`,
+            description: `Directing You To ${featureName}`,
+            variant: 'default',
+            duration: 2000, // Auto-hide after 3 seconds
+        });
     };
 
     return (
@@ -40,14 +48,14 @@ export default function Home() {
                         <div className="text-lg font-bold flex items-center justify-center text-teal-400">MediNexus</div>
                     </div>
                 </Link>
-                <p className='text-sm font-bold flex items-center justify-center text-teal-400'>Dashboard</p>
+                <p className='text-xl font-bold flex items-center justify-center text-teal-400'>Dashboard</p>
             </header>
 
             {/* Main Content */}
             <main className="h-[calc(100vh-60px)] overflow-hidden p-4">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {/* Quick Access Cards */}
-                    <Link href="/patients" className="group">
+                    <Link href="/patients" className="group" onClick={(e) => handleLinkClick1('Register Patient Portal')}>
                         <Card className="h-32 bg-teal-900/20 border-teal-400/10 hover:bg-teal-900/30 transition-all hover:scale-[1.02]">
                             <CardContent className="flex flex-col items-center justify-center h-full p-4 text-center">
                                 <Users className="h-10 w-10 text-teal-400 mb-2 group-hover:scale-110 transition-transform" />
@@ -56,6 +64,18 @@ export default function Home() {
                             </CardContent>
                         </Card>
                     </Link>
+
+                    {/* Hospital Details Link with Toast */}
+                    <Link href="/hospital" className="group" onClick={(e) => handleLinkClick1('Hospital Details')}>
+                        <Card className="h-32 bg-teal-900/20 border-teal-400/10 hover:bg-teal-900/30 transition-all hover:scale-[1.02]">
+                            <CardContent className="flex flex-col items-center justify-center h-full p-4 text-center">
+                                <ClipboardList className="h-10 w-10 text-teal-400 mb-2 group-hover:scale-110 transition-transform" />
+                                <h3 className="text-lg font-semibold text-teal-50">Hospital Details</h3>
+                                <p className="text-xs text-teal-300/70">View hospital information</p>
+                            </CardContent>
+                        </Card>
+                    </Link>
+
 
                     <div>
                         {/* Admin Panel Card */}
@@ -84,32 +104,33 @@ export default function Home() {
                         </Card>
                     </Link>
 
-                    {/* Notifications Link with Toast */}
-                    <Link href="#" className="group" onClick={(e) => handleLinkClick(e, 'Notifications')}>
-                        <Card className="h-32 bg-teal-900/20 border-teal-400/10 hover:bg-teal-900/30 transition-all hover:scale-[1.02]">
-                            <CardContent className="flex flex-col items-center justify-center h-full p-4 text-center">
-                                <ClipboardList className="h-10 w-10 text-teal-400 mb-2 group-hover:scale-110 transition-transform" />
-                                <h3 className="text-lg font-semibold text-teal-50">Notifications</h3>
-                                <p className="text-xs text-teal-300/70">View hospital updates</p>
-                            </CardContent>
-                        </Card>
-                    </Link>
+
                 </div>
                 {/* Notifications Section */}
-                <div className="mt-4">
-                    <h2 className="text-lg text-teal-300 mb-2">Latest Updates</h2>
-                    <div className="space-y-2">
-                        <div className="p-3 bg-teal-900/30 rounded-lg text-teal-200 text-sm border-l-4 border-teal-500">
-                            <p>New appointment slots available for Dr. Smith.</p>
+                <div className="mt-6">
+                    <h2 className="text-2xl font-bold text-teal-300 mb-4">Latest Updates</h2>
+                    <div className="space-y-4">
+                        <div className="p-5 bg-teal-900/40 rounded-xl text-white text-base border-l-8 border-teal-500 shadow-lg">
+                            <p className="font-semibold">🩺 New appointment slots available for Dr. Johnson and Dr. Patel.</p>
                         </div>
-                        <div className="p-3 bg-teal-900/30 rounded-lg text-teal-200 text-sm border-l-4 border-teal-500">
-                            <p>Emergency cases have increased in the ICU.</p>
+                        <div className="p-5 bg-teal-900/40 rounded-xl text-white text-base border-l-8 border-red-500 shadow-lg">
+                            <p className="font-semibold">🏥 ICU capacity has been increased to accommodate more critical patients.</p>
                         </div>
-                        <div className="p-3 bg-teal-900/30 rounded-lg text-teal-200 text-sm border-l-4 border-teal-500">
-                            <p>Pharmacy is restocking essential medicines.</p>
+                        <div className="p-5 bg-teal-900/40 rounded-xl text-white text-base border-l-8 border-blue-500 shadow-lg">
+                            <p className="font-semibold">💊 The pharmacy has restocked essential medicines, including emergency supplies.</p>
+                        </div>
+                        <div className="p-5 bg-teal-900/40 rounded-xl text-white text-base border-l-8 border-yellow-500 shadow-lg">
+                            <p className="font-semibold">🩸 Blood donation camp scheduled for this Saturday in the hospital lobby.</p>
+                        </div>
+                        <div className="p-5 bg-teal-900/40 rounded-xl text-white text-base border-l-8 border-purple-500 shadow-lg">
+                            <p className="font-semibold">🖥️ New advanced MRI scanning machine installed in the radiology department.</p>
+                        </div>
+                        <div className="p-5 bg-teal-900/40 rounded-xl text-white text-base border-l-8 border-green-500 shadow-lg">
+                            <p className="font-semibold">💉 COVID-19 booster shots now available at the outpatient department.</p>
                         </div>
                     </div>
                 </div>
+
             </main>
         </div>
     );

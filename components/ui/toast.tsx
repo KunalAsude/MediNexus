@@ -27,7 +27,7 @@ const toastVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-[linear-gradient(to_right,#006D6F,#004B3A)] text-white shadow-xl", // Dark cyan to dark green gradient with white text
+        default: "bg-[linear-gradient(to_right,#003F40,#002A20)] border border-teal-700 text-white shadow-xl", // Dark cyan to dark green gradient with white text
         destructive: "destructive group bg-red-800 text-red-100 shadow-xl", // Dark red for destructive variant
       },
     },
