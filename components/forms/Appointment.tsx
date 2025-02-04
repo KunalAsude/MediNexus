@@ -47,7 +47,6 @@ const AppointmentForm = ({
     const router = useRouter()
     const AppointmentFormValidation = getAppointmentSchema(type);
 
-    console.log(appointment)
     const form = useForm<z.infer<typeof AppointmentFormValidation>>({
         resolver: zodResolver(AppointmentFormValidation),
         defaultValues:  {
@@ -93,7 +92,7 @@ const AppointmentForm = ({
                     status:status as Status
                 }
                 const appointment = await createAppointment(appointmentData)
-
+                
                 if(appointment){
                     form.reset()
                     router.push(`/patients/${userId}/new-appointment/success?appointmentId=${appointment.$id}`)

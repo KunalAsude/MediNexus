@@ -11,6 +11,7 @@ import { useState } from "react"
 import { UserFormValidation } from "@/lib/Validation"
 import { useRouter } from "next/navigation"
 import { createUser } from "@/lib/actions/patient.actions"
+import { toast } from "@/hooks/use-toast"
 
 export enum FormFieldTypes {
   INPUT = "input",
@@ -48,7 +49,17 @@ const PatientForm = () => {
       };
       console.log('here')
       const newUser = await createUser(user);
+
       console.log(newUser)
+       if(newUser===undefined) {
+        toast({
+          title: "Error",
+          description: "User With Same Mobile Number Already Exists",
+          variant: "destructive",
+        });
+        return
+      }
+
       if (newUser) {
         router.push(`/patients/${newUser.$id}/register`);
       }
