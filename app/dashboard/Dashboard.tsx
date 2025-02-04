@@ -52,7 +52,7 @@ export default function Home() {
                             <CardContent className="flex flex-col items-center justify-center h-full p-4 text-center">
                                 <Users className="h-10 w-10 text-teal-400 mb-2 group-hover:scale-110 transition-transform" />
                                 <h3 className="text-lg font-semibold text-teal-50">Patient Portal</h3>
-                                <p className="text-xs text-teal-300/70">Manage appointments & records</p>
+                                <p className="text-xs text-teal-300/70">Register Patient and Book Appointments</p>
                             </CardContent>
                         </Card>
                     </Link>
@@ -64,7 +64,7 @@ export default function Home() {
                                 <CardContent className="flex flex-col items-center justify-center h-full p-4 text-center">
                                     <Activity className="h-10 w-10 text-teal-400 mb-2 group-hover:scale-110 transition-transform" />
                                     <h3 className="text-lg font-semibold text-teal-50">Admin Panel</h3>
-                                    <p className="text-xs text-teal-300/70">Access hospital management</p>
+                                    <p className="text-xs text-teal-300/70">Manage appointments & records</p>
                                 </CardContent>
                             </Card>
                         </div>
