@@ -19,7 +19,7 @@ export default function HospitalImageSlider() {
         effect="fade"
         autoplay={{ delay: 3000, disableOnInteraction: false }}
         loop
-        className="w-full h-[60vh] rounded-lg"  // Increased height to 60vh
+        className="w-full h-[35vh] sm:h-[50vh] md:h-[60vh] lg:h-[60vh] rounded-lg"  // Adjusted height for responsive design
       >
         {hospitalImages.map((img, index) => (
           <SwiperSlide key={index}>

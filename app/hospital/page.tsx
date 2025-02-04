@@ -22,7 +22,7 @@ export default function HospitalDetails() {
   return (
     <div className="h-screen flex flex-col">
       {/* Header */}
-      <header className="admin-header mb-3">
+      <header className="admin-header mb-2">
         <Link href="/" className="cursor-pointer">
           <div className="flex flex-row align-middle">
             <img
@@ -37,15 +37,16 @@ export default function HospitalDetails() {
         </Link>
         <div className="flex flex-row gap-2 align-middle justify-center items-center cursor-pointer">
           <Image
-          src='/assets/images/cityline.webp'
-          alt="Cityline Hospital"
-          width={100}
-          height={100}
-          className="h-12 w-fit rounded-lg"
+            src="/assets/images/cityline.webp"
+            alt="Cityline Hospital"
+            width={100}
+            height={100}
+            className="h-10 sm:h-8 w-fit rounded-lg"
           />
-        <p className="text-xl font-bold flex items-center justify-center text-teal-400">Cityline Hospital</p>
+          <p className="text-lg font-bold flex items-center justify-center text-teal-400 sm:text-lg">Cityline Hospital</p>
         </div>
       </header>
+
 
       {/* Main Content */}
       <main className="h-[calc(100vh-60px)] overflow-auto remove-scrollbar p-4">

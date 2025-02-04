@@ -52,7 +52,7 @@ export default function Home() {
             </header>
 
             {/* Main Content */}
-            <main className="h-[calc(100vh-60px)] overflow-hidden p-4">
+            <main className="h-[calc(100vh-60px)] overflow-hidden p-4 flex flex-col">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {/* Quick Access Cards */}
                     <Link href="/patients" className="group" onClick={(e) => handleLinkClick1('Register Patient Portal')}>
@@ -104,32 +104,35 @@ export default function Home() {
                         </Card>
                     </Link>
 
-
                 </div>
+
                 {/* Notifications Section */}
-                <div className="mt-6">
+                <div className="mt-6 flex flex-col flex-1 overflow-hidden mb-5 mr-1">
                     <h2 className="text-2xl font-bold text-teal-300 mb-4">Latest Updates</h2>
-                    <div className="space-y-4">
-                        <div className="p-5 bg-teal-900/40 rounded-xl text-white text-base border-l-8 border-teal-500 shadow-lg">
-                            <p className="font-semibold">🩺 New appointment slots available for Dr. Johnson and Dr. Patel.</p>
-                        </div>
-                        <div className="p-5 bg-teal-900/40 rounded-xl text-white text-base border-l-8 border-red-500 shadow-lg">
-                            <p className="font-semibold">🏥 ICU capacity has been increased to accommodate more critical patients.</p>
-                        </div>
-                        <div className="p-5 bg-teal-900/40 rounded-xl text-white text-base border-l-8 border-blue-500 shadow-lg">
-                            <p className="font-semibold">💊 The pharmacy has restocked essential medicines, including emergency supplies.</p>
-                        </div>
-                        <div className="p-5 bg-teal-900/40 rounded-xl text-white text-base border-l-8 border-yellow-500 shadow-lg">
-                            <p className="font-semibold">🩸 Blood donation camp scheduled for this Saturday in the hospital lobby.</p>
-                        </div>
-                        <div className="p-5 bg-teal-900/40 rounded-xl text-white text-base border-l-8 border-purple-500 shadow-lg">
-                            <p className="font-semibold">🖥️ New advanced MRI scanning machine installed in the radiology department.</p>
-                        </div>
-                        <div className="p-5 bg-teal-900/40 rounded-xl text-white text-base border-l-8 border-green-500 shadow-lg">
-                            <p className="font-semibold">💉 COVID-19 booster shots now available at the outpatient department.</p>
+                    <div className="flex-1 overflow-y-auto remove-scrollbar ">
+                        <div className="space-y-4">
+                            <div className="p-5 bg-teal-900/40 rounded-xl text-white text-base border-l-8 border-teal-500 shadow-lg">
+                                <p className="font-semibold">🩺 New appointment slots available for Dr. Johnson and Dr. Patel.</p>
+                            </div>
+                            <div className="p-5 bg-teal-900/40 rounded-xl text-white text-base border-l-8 border-red-500 shadow-lg">
+                                <p className="font-semibold">🏥 ICU capacity has been increased to accommodate more critical patients.</p>
+                            </div>
+                            <div className="p-5 bg-teal-900/40 rounded-xl text-white text-base border-l-8 border-blue-500 shadow-lg">
+                                <p className="font-semibold">💊 The pharmacy has restocked essential medicines, including emergency supplies.</p>
+                            </div>
+                            <div className="p-5 bg-teal-900/40 rounded-xl text-white text-base border-l-8 border-yellow-500 shadow-lg">
+                                <p className="font-semibold">🩸 Blood donation camp scheduled for this Saturday in the hospital lobby.</p>
+                            </div>
+                            <div className="p-5 bg-teal-900/40 rounded-xl text-white text-base border-l-8 border-purple-500 shadow-lg">
+                                <p className="font-semibold">🖥️ New advanced MRI scanning machine installed in the radiology department.</p>
+                            </div>
+                            <div className="p-5 bg-teal-900/40 rounded-xl text-white text-base border-l-8 border-green-500 shadow-lg">
+                                <p className="font-semibold">💉 COVID-19 booster shots now available at the outpatient department.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
+
 
             </main>
         </div>
