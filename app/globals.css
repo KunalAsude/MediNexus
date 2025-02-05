@@ -250,17 +250,17 @@
   .shad-table-row {
     @apply border-b border-dark-400 text-light-200 !important;
   }
-
   .shad-otp {
-    @apply w-full flex justify-between !important;
+    @apply w-full flex justify-between gap-2 sm:gap-1 !important;
   }
-
+  
   .shad-otp-slot {
-    @apply text-36-bold justify-center flex border border-dark-500 rounded-lg size-16 gap-4 !important;
+    @apply text-36-bold sm:text-lg justify-center flex border border-dark-500 
+      rounded-lg size-16 sm:size-12 gap-4 sm:gap-2 bg-dark-400 !important;
   }
-
   .shad-alert-dialog {
-    @apply space-y-5 bg-dark-400 border-dark-500 outline-none !important;
+    @apply space-y-5 sm:space-y-3 bg-[linear-gradient(to_right,#042F2E,#012621,#002A1C)] 
+      border-dark-500 outline-none p-6  rounded-lg !important;
   }
 
   .shad-sheet-content button {

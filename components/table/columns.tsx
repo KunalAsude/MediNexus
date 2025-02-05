@@ -71,7 +71,7 @@ export const columns: ColumnDef<Appointment>[] = [
         header: () => <div className="pl-4">Actions</div>,
         cell: ({ row: { original: data } }) => {
             return (
-                <div className="flex gap-4 justify-center ">
+                <div className="flex gap-3 justify-center sm:ml-5 ">
                     <AppointmentModal
                         type='schedule'
                         patientId={data.patient.$id}

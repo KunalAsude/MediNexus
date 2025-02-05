@@ -44,7 +44,7 @@ const AppointmentModal = ({
             </DialogTrigger>
 
 
-            <DialogContent className='shad-dialog sm:max-w-md'>
+            <DialogContent className='shad-dialog sm:max-w-md bg-[linear-gradient(135deg,#042F2E,#012621)]'>
                 <DialogHeader className='mb-4 space-y-3'>
                     <DialogTitle className='capitalize'>{type} Appointment</DialogTitle>
                     <DialogDescription>

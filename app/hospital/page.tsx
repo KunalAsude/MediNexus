@@ -22,30 +22,35 @@ export default function HospitalDetails() {
   return (
     <div className="h-screen flex flex-col">
       {/* Header */}
-      <header className="admin-header mb-2">
+      <header className="admin-header mb-2 flex justify-between items-center px-4">
+        {/* MediNexus Logo - Hidden on Small Screens */}
         <Link href="/" className="cursor-pointer">
-          <div className="flex flex-row align-middle">
+          <div className="hidden sm:flex flex-row items-center">
             <img
               src="https://img.icons8.com/arcade/64/hospital.png"
               alt="MediNexus Logo"
               height="100px"
               width="100px"
-              className="h-10 w-fit"
+              className="h-10 w-auto"
             />
-            <div className="text-lg font-bold flex items-center justify-center text-teal-400">MediNexus</div>
+            <div className="text-lg font-bold text-teal-400 ml-2">MediNexus</div>
           </div>
         </Link>
-        <div className="flex flex-row gap-2 align-middle justify-center items-center cursor-pointer">
+
+        {/* Cityline Hospital Logo and Name */}
+        <div className="flex flex-row gap-2 sm:gap-1 items-center cursor-pointer">
           <Image
             src="/assets/images/cityline.webp"
             alt="Cityline Hospital"
             width={100}
             height={100}
-            className="h-10 sm:h-8 w-fit rounded-lg"
+            className="h-10 sm:h-6 w-auto rounded-lg"
           />
-          <p className="text-lg font-bold flex items-center justify-center text-teal-400 sm:text-lg">Cityline Hospital</p>
+          <p className="text-lg sm:text-sm font-bold text-teal-400">Cityline Hospital</p>
         </div>
       </header>
+
+
 
 
       {/* Main Content */}
