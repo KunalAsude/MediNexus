@@ -19,14 +19,14 @@ export default function HospitalImageSlider() {
         effect="fade"
         autoplay={{ delay: 3000, disableOnInteraction: false }}
         loop
-        className="w-full h-[35vh] sm:h-[50vh] md:h-[60vh] lg:h-[60vh] rounded-lg"  // Adjusted height for responsive design
+        className="w-full h-[45vh] sm:h-[50vh] md:h-[60vh] lg:h-[80vh] rounded-lg"  // Adjusted height for responsive design
       >
         {hospitalImages.map((img, index) => (
           <SwiperSlide key={index}>
             <img
               src={img}
               alt={`Hospital ${index + 1}`}
-              className="w-full h-full object-cover object-center shadow-lg"  // Ensures the image is centered and covers the space
+              className="w-full h-full object-center shadow-lg"  // Ensures the image is centered and covers the space
             />
           </SwiperSlide>
         ))}

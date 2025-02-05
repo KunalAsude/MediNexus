@@ -89,6 +89,9 @@ export const hospitalImages: string[] = [
   "https://images.pexels.com/photos/7563452/pexels-photo-7563452.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1", // Hospital Image 1
   "https://images.pexels.com/photos/13548720/pexels-photo-13548720.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1", // Hospital Image 2
   "https://images.pexels.com/photos/4006979/pexels-photo-4006979.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1", // Hospital Image 3
+  "https://i.pinimg.com/736x/cf/b0/02/cfb002b1d68b6ee72861fb427cc34b04.jpg",
+  "https://i.pinimg.com/736x/e4/e9/6f/e4e96f234f2adb09a560848f0e24967c.jpg",
+  "https://images.pexels.com/photos/3845129/pexels-photo-3845129.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load"
 ];
 export const departments = [
   "Cardiology",

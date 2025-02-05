@@ -115,6 +115,7 @@ const AppointmentForm = ({
                 if (updatedAppointment) {
                     setOpen && setOpen(false);
                     form.reset()
+                    
                 }
 
             }
@@ -220,7 +221,7 @@ const AppointmentForm = ({
                 )}
 
 
-                <SubmitButton isLoading={isLoading} className={`${type==='cancel' ?'shad-danger-btn' : 'shad-primary-btn bg-[linear-gradient(to_right,#064E4C,#024632,#013220)] border-2 border-cyan-900'} w-full `}>
+                <SubmitButton isLoading={isLoading}  className={`${type==='cancel' ?'shad-danger-btn' : 'shad-primary-btn bg-[linear-gradient(to_right,#064E4C,#024632,#013220)] border-2 border-cyan-900'} w-full `}>
                    {buttonlabel}
                 </SubmitButton>
             </form>
