@@ -1,98 +1,104 @@
 "use server";
 
-import { ID, Query } from "node-appwrite";
-
-import {
-  BUCKET_ID,
-  DATABASE_ID,
-  ENDPOINT,
-  PATIENT_COLLECTION_ID,
-  PROJECT_ID,
-  databases,
-  storage,
-  users,
-} from "../appwrite.config";
 import { parseStringify } from "../utils";
 import { InputFile } from "node-appwrite/file";
+import connect from "../mongodb";
+import User from "../modals/userModel";
+import { ObjectId } from "mongoose";
+import RegisteredPatient from "../modals/registerPatientModal";
 
-// CREATE APPWRITE USER
-export const createUser = async (user: CreateUserParams) => {
+
+export const createUser = async (user: { name: string; email: string; phone: string }) => {
   try {
-    const newuser = await users.create(
-      ID.unique(),
-      user.email,
-      user.phone,
-      undefined,
-      user.name
-    );
+    await connect(); 
 
-    return parseStringify(newuser);
-  } catch (error: any) {
-    if (error && error?.code === 409) {
-      const existingUser = await users.list([
-        Query.equal("email", [user.email]),
-      ]);
-
-      return existingUser.users[0];
+    const existingUser = await User.findOne({ email: user.email }).lean(); 
+    if (existingUser) {
+      return existingUser; 
     }
-    console.error("An error occurred while creating a new user:", error);
+
+    // Create a new user
+    const newUser = await User.create({
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+    });
+
+    return JSON.parse(JSON.stringify(newUser)); 
+  } catch (error) {
+    console.error("Error creating user:", error);
+    throw new Error("Failed to create user");
   }
 };
+
+
+
 
 export const getUser = async (userId: string) => {
   try {
-    const user = await users.get(userId);
-    return parseStringify(user);
+    await connect(); 
+
+    const user = await User.findById(userId).lean();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    return JSON.parse(JSON.stringify(user)); 
   } catch (error) {
-    console.log(error);
+    console.error("Error fetching user:", error);
+    return null;
   }
 };
+
+
 
 export const registerPatient = async ({
   identificationDocument,
   ...patient
 }: RegisterUserParams) => {
   try {
-    let file;
-    
-    if (identificationDocument) {
-      
-      const inputFile = InputFile.fromBuffer(
-        identificationDocument?.get("blobFile") as Blob,
-        identificationDocument?.get("fileName") as string
-      );
+    await connect(); 
 
-      console.log('gender',patient.gender)
-      file = await storage.createFile(BUCKET_ID!, ID.unique(), inputFile);
-    }
-    const newPatient = await databases.createDocument(
-      DATABASE_ID!,
-      PATIENT_COLLECTION_ID!,
-      ID.unique(),
-      {
-        identificationDocumentId: file?.$id || null,
-        identificationDocumentUrl: `${ENDPOINT}/storage/buckets/${BUCKET_ID}/files/${file?.$id}/view?project=${PROJECT_ID}`,
-        ...patient,
-      }
-    );
+    let fileUrl = null;
 
-    return parseStringify(newPatient);
+    // File upload logic can be implemented later
+    // if (identificationDocument) {
+    //   const fileBuffer = identificationDocument.get("blobFile") as Blob;
+    //   const fileName = identificationDocument.get("fileName") as string;
+    //   fileUrl = await uploadFileToStorage(fileBuffer, fileName);
+    // }
+
+    // Create new patient record in MongoDB
+    const newPatient = await RegisteredPatient.create({
+      identificationDocumentUrl: fileUrl,
+      ...patient,
+    });
+
+    return JSON.parse(JSON.stringify(newPatient)); 
   } catch (error) {
-    console.log(error);
+    console.error("Error registering patient:", error);
+    return null;
   }
 };
 
-export const getPatient = async (userId: string) => {
+export const getRegisteredPatient = async (userId: string) => {
   try {
-    const patient = await databases.listDocuments(
-      DATABASE_ID!,
-      PATIENT_COLLECTION_ID!,
-      [Query.equal("userId", userId)]
-    )
+   
+    await connect();
 
-    return parseStringify(patient.documents[0]);
+    
+    const patient = await RegisteredPatient.findOne({ userId }).lean(); 
 
+    
+    if (patient) {
+      return JSON.parse(JSON.stringify(patient)); 
+    } else {
+      console.log("Patient not found.");
+      return null; 
+    }
   } catch (error) {
-    console.log(error);
+    console.error("Error fetching registered patient:", error);
+    throw new Error("Unable to fetch registered patient data");
   }
 };

@@ -26,8 +26,8 @@ export enum FormFieldTypes {
 
 
 const PatientForm = () => {
-  const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof UserFormValidation>>({
     resolver: zodResolver(UserFormValidation),
@@ -36,7 +36,7 @@ const PatientForm = () => {
       email: "",
       phone: "",
     },
-  })
+  });
 
   const onSubmit = async (values: z.infer<typeof UserFormValidation>) => {
     setIsLoading(true);
@@ -47,27 +47,30 @@ const PatientForm = () => {
         email: values.email,
         phone: values.phone,
       };
-      console.log('here')
+
       const newUser = await createUser(user);
 
-      console.log(newUser)
-       if(newUser===undefined) {
+      if (!newUser) {
         toast({
           title: "Error",
-          description: "User With Same Mobile Number Already Exists",
+          description: "User with the same email already exists",
           variant: "destructive",
         });
-        return
+        return;
       }
 
-      if (newUser) {
-        router.push(`/patients/${newUser.$id}/register`);
-      }
+      // Redirect using MongoDB _id instead of Appwrite $id
+      router.push(`/patients/${newUser._id}/register`);
     } catch (error) {
       console.log(error);
+      toast({
+        title: "Error",
+        description: "An error occurred while creating the user.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
   return (
     <Form {...form}>
