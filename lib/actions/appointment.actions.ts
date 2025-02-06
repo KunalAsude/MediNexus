@@ -1,120 +1,141 @@
-"use server"
+"use server";
 
-import { ID, Query } from "node-appwrite";
-import { APPOINTMENT_COLLECTION_ID, DATABASE_ID, databases, messaging } from "../appwrite.config";
-import { formatDateTime, parseStringify } from "../utils";
-import { scheduler } from "timers/promises";
-import { Appointment } from "@/types/appwrite.types";
+import mongoose from "mongoose";
+import { formatDateTime } from "../utils";
 import { revalidatePath } from "next/cache";
+import connect from "../mongodb";
+import AppointmentSchema from "../modals/appointmentSchema";
 
-export const createAppointment = async (appointment:CreateAppointmentParams) => {
+ // Ensure you have a MongoDB connection utility
 
-    try {
-        const newAppointment = await databases.createDocument(
-            DATABASE_ID!,
-            APPOINTMENT_COLLECTION_ID!,
-            ID.unique(),
-            appointment
-          );
-      
-          return parseStringify(newAppointment);
+ export const createAppointment = async (params: CreateAppointmentParams) => {
+  try {
+    // Connect to MongoDB
+    await connect();
 
-    } catch (error) {
-        console.log(error)
+    // Create a new appointment instance
+    const newAppointment = new AppointmentSchema({
+      userId: params.userId,
+      patientId: params.patientId, // Mapping patientId to the patient field in schema
+      patientName: params.patientName,
+      primaryPhysician: params.primaryPhysician,
+      reason: params.reason,
+      schedule: params.schedule,
+      status: params.status,
+      note: params.note || "",  // Default to empty string if note is not provided
+    });
+
+    console.log("New Appointment:", newAppointment);
+
+    // Save the new appointment to the database
+    const savedAppointment = await newAppointment.save();
+
+    // Return the saved appointment object
+    return savedAppointment.toObject();  // Convert to plain object before returning
+  } catch (error) {
+    console.error("Error creating appointment:", error);
+    throw new Error("Failed to create appointment");
+  }
+};
+
+
+
+
+export const getAppointment = async (appointmentId: string) => {
+  try {
+    await connect();
+    const appointment = await AppointmentSchema.findById(appointmentId).lean();
+    if (!appointment) throw new Error("Appointment not found");
+    return appointment;
+  } catch (error) {
+    console.error("Error fetching appointment:", error);
+    throw new Error("Failed to fetch appointment");
+  }
+};
+
+export const getRecentAppointmentList = async () => {
+  try {
+    await connect();
+    const appointments = await AppointmentSchema.find()
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const initialCounts = {
+      scheduledCount: 0,
+      pendingCount: 0,
+      cancelledCount: 0,
+    };
+
+    const counts = appointments.reduce((acc, appointment) => {
+      if (appointment.status === "scheduled") acc.scheduledCount += 1;
+      else if (appointment.status === "pending") acc.pendingCount += 1;
+      else if (appointment.status === "cancelled") acc.cancelledCount += 1;
+      return acc;
+    }, initialCounts);
+
+    return {
+      totalCount: appointments.length,
+      ...counts,
+      documents: appointments,
+    };
+  } catch (error) {
+    console.error("Error fetching appointments:", error);
+    throw new Error("Failed to fetch appointment list");
+  }
+};
+
+export const updateAppointment = async ({
+  appointmentId,
+  userId,
+  appointment,
+  type,
+}: UpdateAppointmentParams) => {
+  try {
+    await connect();
+    const updatedAppointment = await AppointmentSchema.findByIdAndUpdate(
+      appointmentId,
+      {
+        $set: {
+          primaryPhysician: appointment.primaryPhysician,
+          schedule: appointment.schedule,
+          status: appointment.status,
+          cancellationReason: appointment.cancellationReason || "",
+        },
+      },
+      { new: true }
+    ).lean();
+
+    if (!updatedAppointment) {
+      throw new Error("Appointment not found");
     }
-}
 
-export const getAppointment = async (appointmentId:string) =>{
-    try {
-        const appointment = await databases.getDocument(
-            DATABASE_ID!,
-            APPOINTMENT_COLLECTION_ID!,
-            appointmentId
-        )
+    // const smsMessage = `Greetings from MediNexus. ${
+    //   type === "schedule"
+    //     ? `Your appointment is confirmed for ${
+    //         formatDateTime(appointment.schedule!).dateTime
+    //       } with Dr. ${appointment.primaryPhysician}`
+    //     : `We regret to inform you that your appointment for ${
+    //         formatDateTime(appointment.schedule!).dateTime
+    //       } is cancelled. Reason: ${appointment.cancellationReason}`
+    // }`;
 
-        return parseStringify(appointment)
-    } catch (error) {
-       console.log(error) 
-    }
-}
+    // await sendSMSNotification(userId, smsMessage);
 
-export const getRecentAppointmentList = async() => {
-    try {
-        
-        const appointments = await databases.listDocuments(
-            DATABASE_ID!,
-            APPOINTMENT_COLLECTION_ID!,
-            [
-                Query.orderDesc('$createdAt')
-            ]
-        );
-        const initialCounts ={
-            scheduledCount : 0,
-            pendingCount : 0,
-            cancelledCount :0
-        }
+    // revalidatePath("/admin");
+    return updatedAppointment;
+  } catch (error) {
+    console.error("Error updating appointment:", error);
+    throw new Error("Failed to update appointment");
+  }
+};
 
-        const counts=(appointments.documents as Appointment[]).reduce((acc,appointment)=>
-            {
-                if (appointment.status ==='scheduled') {
-                    acc.scheduledCount +=1;
-                }
-                else if (appointment.status ==='pending') {
-                    acc.pendingCount +=1;
-                }
-                else if (appointment.status ==='cancelled') {
-                    acc.cancelledCount +=1;
-                }
-                return acc;
-            },
-            initialCounts);
-
-        const data ={
-            totalCount:appointments.total,
-            ...counts,
-            documents:appointments.documents
-        }
-
-        return parseStringify(data)
-        
-    } catch (error) {
-        console.log(error)
-    }
-}
-
-export const updateAppointment = async ({appointmentId,userId,appointment,type}:UpdateAppointmentParams) =>{
-    try {
-        const updateAppointment = await databases.updateDocument(
-            DATABASE_ID!,
-            APPOINTMENT_COLLECTION_ID!,
-            appointmentId,
-            appointment
-        )
-        if (!updateAppointment) {
-            throw new Error('Appointment not Found')
-        }
-
-        const smsMessage = `Greetings from MediNexus. ${type === "schedule" ? `Your appointment is confirmed for ${formatDateTime(appointment.schedule!).dateTime} with Dr. ${appointment.primaryPhysician}` : `We regret to inform that your appointment for ${formatDateTime(appointment.schedule!).dateTime} is cancelled. Reason:  ${appointment.cancellationReason}`}.`;
-    await sendSMSNotification(userId, smsMessage);
-
-    revalidatePath("/admin");
-    return parseStringify(updateAppointment);
-    } catch (error) {
-        console.log(error)
-    }
-}
-
-export const sendSMSNotification = async (userId: string, content: string) => {
-    try {
-      // https://appwrite.io/docs/references/1.5.x/server-nodejs/messaging#createSms
-      const message = await messaging.createSms(
-        ID.unique(),
-        content,
-        [],
-        [userId]
-      );
-      return parseStringify(message);
-    } catch (error) {
-      console.error("An error occurred while sending sms:", error);
-    }
-  };
+// export const sendSMSNotification = async (userId: string, content: string) => {
+//   try {
+//     console.log(`Sending SMS to user ${userId}: ${content}`);
+//     // You need to implement actual SMS sending logic
+//     return { success: true, message: "SMS sent" };
+//   } catch (error) {
+//     console.error("An error occurred while sending SMS:", error);
+//     throw new Error("Failed to send SMS");
+//   }
+// };

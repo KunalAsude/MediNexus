@@ -20,57 +20,59 @@ import { SelectItem } from "../ui/select"
 import { FileUploader } from "../ui/FileUploader"
 
 
-
-
 const RegisterForm = ({ user }: { user: User }) => {
-    const [isLoading, setIsLoading] = useState(false)
-    const router = useRouter()
-
+    const [isLoading, setIsLoading] = useState(false);
+    const router = useRouter();
+  
     const form = useForm<z.infer<typeof PatientFormValidation>>({
-        resolver: zodResolver(PatientFormValidation),
-        defaultValues: {
-            ...PatientFormDefaultValues,
-            name: "",
-            email: "",
-            phone: "",
-        },
-    })
-
+      resolver: zodResolver(PatientFormValidation),
+      defaultValues: {
+        ...PatientFormDefaultValues,
+        name: "",
+        email: "",
+        phone: "",
+        identificationDocument: [], 
+      },
+    });
+  
     const onSubmit = async (values: z.infer<typeof PatientFormValidation>) => {
         setIsLoading(true);
-
+      
         let formData;
-
+        // Handle file upload for identification document
         if (values.identificationDocument && values.identificationDocument.length > 0) {
-            const blobFile = new Blob([values.identificationDocument[0]], {
-                type: values.identificationDocument[0].type
-            })
-            formData = new FormData();
-            formData.append('blobFile', blobFile);
-            formData.append('fileName', values.identificationDocument[0].name)
+          const blobFile = new Blob([values.identificationDocument[0]], {
+            type: values.identificationDocument[0].type,
+          });
+          formData = new FormData();
+          formData.append("blobFile", blobFile);
+          formData.append("fileName", values.identificationDocument[0].name);
         }
+      
         try {
-            const patientData = {
-                ...values,
-                userId: user.$id,
-                birthDate: new Date(values.birthDate),
-                identificationDocument: formData,
-            }
-
-            console.log('patientData', patientData)
-            // @ts-ignore
-            const patient = await registerPatient(patientData);
-
-            if (patient) {
-                router.push(`/patients/${user.$id}/new-appointment`);
-            }
-
+          const patientData = {
+            ...values,
+            //@ts-ignore
+            userId: user._id,
+            birthDate: new Date(values.birthDate),
+            identificationDocument: formData,
+            primaryPhysician: values.primaryPhysician, 
+          };
+      
+          console.log("patientData", patientData);
+          //@ts-ignore
+          const patient = await registerPatient(patientData); 
+          if (patient) {
+            //@ts-ignore
+            router.push(`/patients/${user._id}/new-appointment`);
+          }
         } catch (error) {
-            console.log(error);
+          console.log(error);
         }
-
+      
         setIsLoading(false);
-    };
+      };
+      
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-12 flex-1">
