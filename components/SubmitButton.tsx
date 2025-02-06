@@ -15,15 +15,15 @@ const SubmitButton = ({ isLoading, className, children }: ButtonProps) => {
 
   const handleClick = () => {
     
-    const { id, dismiss } = toast({
-      title: "Processing Your Request !!",
-      description: "Please Wait While We Process Your Request...",
-      variant: "default", 
-  })
+  //   const { id, dismiss } = toast({
+  //     title: "Processing Your Request !!",
+  //     description: "Please Wait While We Process Your Request...",
+  //     variant: "default", 
+  // })
 
-  setTimeout(() => {
-      dismiss() 
-  }, 3000)
+  // setTimeout(() => {
+  //     dismiss() 
+  // }, 3000)
 
 
   };
