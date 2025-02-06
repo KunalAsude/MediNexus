@@ -29,122 +29,116 @@ export enum FormFieldTypes {
 }
 
 const AppointmentForm = ({
-    userId,
-    patientId,
-    type,
-    appointment,
-    setOpen
+  userId,
+  patientId,
+  patientName,  // Add patientName here
+  type,
+  appointment,
+  setOpen
 }: {
-    userId: string;
-    patientId: string;
-    type: 'create' | 'cancel' | 'schedule';
-    appointment?:Appointment;
-    setOpen:(open:boolean)=>void;
-
-
+  userId: string;
+  patientId: string;
+  patientName: string;  // Add the type for patientName
+  type: 'create' | 'cancel' | 'schedule';
+  appointment?: Appointment;
+  setOpen: (open: boolean) => void;
 }) => {
-    const [isLoading, setIsLoading] = useState(false)
-    const router = useRouter()
-    const AppointmentFormValidation = getAppointmentSchema(type);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const AppointmentFormValidation = getAppointmentSchema(type);
 
-    const form = useForm<z.infer<typeof AppointmentFormValidation>>({
-        resolver: zodResolver(AppointmentFormValidation),
-        defaultValues:  {
-            primaryPhysician: appointment ? appointment?.primaryPhysician : "",
-            schedule: appointment
-              ? new Date(appointment?.schedule!)
-              : new Date(Date.now()),
-            reason: appointment ? appointment.reason : "",
-            note: appointment?.note || "",
-            cancellationReason: appointment?.cancellationReason || "",
-          },
-    })
+  const form = useForm<z.infer<typeof AppointmentFormValidation>>({
+      resolver: zodResolver(AppointmentFormValidation),
+      defaultValues: {
+          primaryPhysician: appointment ? appointment.primaryPhysician : "",
+          schedule: appointment ? new Date(appointment.schedule) : new Date(Date.now()),
+          reason: appointment ? appointment.reason : "",
+          note: appointment?.note || "",
+          cancellationReason: appointment?.cancellationReason || "",
+      },
+  });
 
-    const onSubmit = async (values: z.infer<typeof AppointmentFormValidation>) => {
-        setIsLoading(true);
+  const onSubmit = async (values: z.infer<typeof AppointmentFormValidation>) => {
+      setIsLoading(true);
 
-        let status;
+      let status;
 
-        switch(type){
-            case 'schedule':
-                status = 'scheduled'
-                break;
-            case 'cancel':
-                status = 'cancelled'
-                break;
-            case 'create':
-                status = 'pending'
-                break;
-        }
+      switch (type) {
+          case 'schedule':
+              status = 'scheduled';
+              break;
+          case 'cancel':
+              status = 'cancelled';
+              break;
+          case 'create':
+              status = 'pending';
+              break;
+      }
 
+      try {
+          if (type === 'create' && patientId) {
+            const appointmentData = {
+              userId,
+              patientId,
+              patientName,  // Add patientName here
+              primaryPhysician: values.primaryPhysician,
+              schedule: new Date(values.schedule),
+              reason: values.reason!,
+              note: values.note,
+              status: status as "pending" | "scheduled" | "cancelled", // MongoDB status type
+          };
 
+          // Call createAppointment function to save the appointment to MongoDB
+          const appointment = await createAppointment(appointmentData);
 
-        try {
+              if (appointment) {
+                  form.reset();
+                  router.push(`/patients/${userId}/new-appointment/success?appointmentId=${appointment._id}`);
+              }
+          } else {
+              const appointmentToUpdate = {
+                  userId,
+                  appointmentId: appointment?._id!,
+                  appointment: {
+                      primaryPhysician: values.primaryPhysician,
+                      schedule: new Date(values.schedule),
+                      status: status as "pending" | "scheduled" | "cancelled",
+                      cancellationReason: values?.cancellationReason,
+                  },
+                  type
+              };
 
-            if(type === 'create' && patientId){
-                const appointmentData = {
-                    userId,
-                    patient:patientId,
-                    primaryPhysician: values.primaryPhysician,
-                    schedule: new Date(values.schedule),
-                    reason: values.reason!,
-                    note: values.note,
-                    status:status as Status
-                }
-                const appointment = await createAppointment(appointmentData)
-                
-                if(appointment){
-                    form.reset()
-                    router.push(`/patients/${userId}/new-appointment/success?appointmentId=${appointment.$id}`)
-                }
-            }else{
-                const appointmentToUpdate ={
-                    userId,
-                    appointmentId:appointment?.$id!,
-                    appointment:{
-                        primaryPhysician:values.primaryPhysician,
-                        schedule:new Date(values.schedule),
-                        status :status as Status,
-                        cancellationReason:values?.cancellationReason,
+              // MongoDB update method
+              const updatedAppointment = await updateAppointment(appointmentToUpdate);
 
-                    },
-                    type
-                }
-                const updatedAppointment = await updateAppointment(appointmentToUpdate)
+              if (updatedAppointment) {
+                  setOpen && setOpen(false);
+                  form.reset();
+              }
+          }
+      } catch (error) {
+          console.log(error);
+      }
 
-                if (updatedAppointment) {
-                    setOpen && setOpen(false);
-                    form.reset()
-                    
-                }
+      setIsLoading(false);
+  };
 
-            }
+  let buttonlabel;
 
-            
-            
-        } catch (error) {
-            console.log(error);
-        }
-
-        setIsLoading(false);
-    };
-
-    let buttonlabel;
-
-    switch(type){
-        case 'create':
-            buttonlabel = 'Book Appointment'
-            break;
-        case 'cancel':
-            buttonlabel = 'Cancel Appointment'
-            break;
-        case 'schedule':
-            buttonlabel = 'Schedule Appointment'
-            break;
-        default:
-            buttonlabel = 'Book Appointment'
-            break;
-    }
+  switch (type) {
+      case 'create':
+          buttonlabel = 'Book Appointment';
+          break;
+      case 'cancel':
+          buttonlabel = 'Cancel Appointment';
+          break;
+      case 'schedule':
+          buttonlabel = 'Schedule Appointment';
+          break;
+      default:
+          buttonlabel = 'Book Appointment';
+          break;
+  }
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 flex-1">
