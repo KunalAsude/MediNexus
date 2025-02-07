@@ -6,9 +6,48 @@ import { useToast } from "@/hooks/use-toast"
 import HospitalCard from "@/components/ui/HospitalCard"
 import { departments } from "@/constants"
 import Image from "next/image"
+import { getHospital } from "@/lib/actions/patient.actions"
+import { useEffect, useState } from "react"
+export interface Hospital {
+  _id: string;
+  name: string;
+  location: {
+    address: string;
+    city: string;
+    state: string;
+    pincode: string;
+  };
+  contact: {
+    phone: string;
+    email: string;
+    website: string;
+  };
+  departments: string[];
+  facilities: string[];
+  ratings: {
+    average: number;
+    reviews: number;
+  };
+  image: string;
+  description: string;
+  status: string;
+}
 
 export default function HospitalDetails() {
   const { toast } = useToast()
+  const [hospital, setHospital] = useState<Hospital | null>(null);
+
+  useEffect(() => {
+    const getHospitaldetails = async () => {
+      const hospitalId = "67a5a7ac2524f85fb9930d01";
+      const hospitalData = await getHospital(hospitalId);
+      setHospital(hospitalData);
+
+    }
+    getHospitaldetails();
+
+  }, [])
+
 
   const handleLinkClick = (e: React.MouseEvent, featureName: string) => {
     e.preventDefault()
@@ -46,7 +85,7 @@ export default function HospitalDetails() {
             height={100}
             className="h-10 sm:h-6 w-auto rounded-lg"
           />
-          <p className="text-lg sm:text-sm font-bold text-teal-400">Cityline Hospital</p>
+          <p className="text-lg sm:text-sm font-bold text-teal-400">{hospital?.name}</p>
         </div>
       </header>
 
@@ -60,7 +99,10 @@ export default function HospitalDetails() {
 
         {/* Hospital Overview */}
         <section className="mb-8">
-          <HospitalCard />
+          <HospitalCard  />
+          <p className="text-gray-300 text-xl font-bold  mt-4">
+          {hospital?.description}
+        </p>
         </section>
 
 
@@ -68,7 +110,7 @@ export default function HospitalDetails() {
         <section className="mb-8">
           <h2 className="text-2xl font-semibold text-gray-300 mb-4">Key Departments</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {departments.map((dept, index) => (
+            {hospital?.departments?.map((dept, index) => (
               <Card
                 key={index}
                 className="bg-teal-900/20 border-teal-400/10 rounded-lg shadow-lg  hover:border-teal-400 hover:border-1 cursor-pointer "
@@ -106,6 +148,13 @@ export default function HospitalDetails() {
                 <p className="text-teal-200">A variety of specialties to meet all your healthcare needs.</p>
               </CardContent>
             </Card>
+            <Card className="bg-teal-900/20 border-teal-400/10 rounded-lg shadow-lg hover:border-teal-400 hover:border-1 cursor-pointer">
+              <CardContent className="p-6">
+                <h3 className="text-xl font-semibold text-gray-300 mb-4">Ratings And Reviews</h3>
+                <p className="text-teal-200">Average : {hospital?.ratings?.average}</p>
+                <p className="text-teal-200">Reviews : {hospital?.ratings?.reviews}</p>
+              </CardContent>
+            </Card>
           </div>
         </section>
 
@@ -115,32 +164,28 @@ export default function HospitalDetails() {
             <CardContent className="p-6">
               <h3 className="text-lg font-semibold text-gray-300 mb-4">Facilities</h3>
               <ul className="space-y-2">
-                <li className="flex items-center text-teal-200">
-                  <Building className="h-5 w-5 mr-2 text-teal-400" />
-                  <span>Modern Infrastructure</span>
-                </li>
-                <li className="flex items-center text-teal-200">
-                  <Ambulance className="h-5 w-5 mr-2 text-teal-400" />
-                  <span>24/7 Emergency Services</span>
-                </li>
-                <li className="flex items-center text-teal-200">
-                  <Clock className="h-5 w-5 mr-2 text-teal-400" />
-                  <span>Round-the-clock Care</span>
-                </li>
+                {hospital?.facilities?.map((facility, index) => (
+                  <li key={index} className="flex items-center text-teal-200">
+                    <Building className="h-5 w-5 mr-2 text-teal-400" />
+                    <span>{facility}</span>
+                  </li>
+                ))}
               </ul>
             </CardContent>
           </Card>
         </section>
+
 
         <section className="mb-8">
           <h2 className="text-2xl font-semibold text-gray-300 mb-4">Contact Information</h2>
           <Card className="bg-teal-900/20 border-teal-400/10">
             <CardContent className="p-6">
               <h3 className="text-lg font-semibold text-gray-300 mb-4">Contact Information</h3>
-              <p className="text-teal-200">Medical Center Drive</p>
-              <p className="text-teal-200">Nashik,MH 12345</p>
-              <p className="text-teal-200">Phone: (+91) 123-4567</p>
-              <p className="text-teal-200">Email: info@citylinehospital.com</p>
+              <p className="text-teal-200">{hospital?.location?.address}</p>
+              <p className="text-teal-200">{hospital?.location?.pincode}</p>
+              <p className="text-teal-200">{hospital?.contact?.phone}</p>
+              <p className="text-teal-200">{hospital?.contact?.email}</p>
+              <p className="text-teal-200">{hospital?.contact?.website}</p>
             </CardContent>
           </Card>
         </section>

@@ -1,10 +1,10 @@
-'use client'
+"use client";
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useToast } from '@/hooks/use-toast';
-import { encryptKey } from '@/lib/utils';
-import { Lock, X } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
+import { encryptKey } from "@/lib/utils";
+import { Lock, X } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,47 +13,98 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
+import { getDoctorsByHospital } from "@/lib/actions/patient.actions";
+import { useDispatch, useSelector } from "react-redux";
+import { setSelectedDoctor } from "@/redux/slice/doctorSlice";
+import { RootState, AppDispatch } from "@/redux/store";
+
+interface Doctor {
+  id: string;
+  name: string;
+}
 
 const PasskeyModal = () => {
   const [open, setOpen] = useState(true);
-  const [passkey, setPasskey] = useState('');
-  const [error, setError] = useState('');
+  const [passkey, setPasskey] = useState("");
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [error, setError] = useState("");
+  const selectedDoctor = useSelector((state: RootState) => state.doctor.selectedDoctor);
   const router = useRouter();
   const { toast } = useToast();
+  const dispatch = useDispatch<AppDispatch>();
+  const [localDoctor, setLocalDoctor] = useState("");
+
+
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const hospitalId = "67a5a7ac2524f85fb9930d01";
+        const doctorsData = await getDoctorsByHospital(hospitalId);
+
+
+        const formattedDoctors = doctorsData.map((doc: any) => ({
+          id: doc._id,
+          name: doc.name,
+        }));
+        setDoctors(formattedDoctors);
+      } catch (error) {
+        console.error("Error fetching doctors:", error);
+      }
+    };
+
+    fetchDoctors();
+  }, []);
 
   const closeModal = () => {
     setOpen(false);
-    router.push('/');
+    setPasskey(""); // Reset passkey field
+    setLocalDoctor(""); // Reset doctor selection in UI
+    setError(""); // Clear any errors
+    router.push("/");
   };
 
-  const validatePasskey = (e: React.FormEvent) => {
+  const validatePasskey = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!selectedDoctor) {
+      setError("Please select a doctor.");
+      return;
+    }
 
     if (passkey === process.env.NEXT_PUBLIC_ADMIN_PASSKEY) {
       const encryptedKey = encryptKey(passkey);
-      localStorage.setItem('accessKey', encryptedKey);
-      router.push('/admin');
-      
+      localStorage.setItem("accessKey", encryptedKey);
+
+      const doctorName = doctors.find((d) => d.id === selectedDoctor)?.name || "Doctor";
+
+      router.push("/admin");
+
       toast({
-        title: 'Welcome Back, Admin!',
-        description: 'Manage your appointments and patients...',
-        variant: 'default',
+        title: "Welcome Back, Admin!",
+        description: `Managing appointments for ${doctorName}...`,
+        variant: "default",
         duration: 2000,
       });
     } else {
-      setError('Invalid Passkey');
+      setError("Invalid Passkey");
       toast({
-        title: 'Invalid Passkey',
-        description: 'The passkey you entered is incorrect. Please try again.',
-        variant: 'destructive',
+        title: "Invalid Passkey",
+        description: "The passkey you entered is incorrect. Please try again.",
+        variant: "destructive",
       });
     }
   };
 
+  const handleDoctorChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedDocId = e.target.value;
+    setLocalDoctor(selectedDocId); 
+    dispatch(setSelectedDoctor(selectedDocId)); 
+  };
+
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogContent className="bg-[linear-gradient(135deg,#042F2E,#012621)] border border-teal-800/30 shadow-2xl rounded-lg w-[90%] max-w-md p-6">
+      <AlertDialogContent className="bg-[linear-gradient(135deg,#042F2E,#012621)] border-teal-800/30 shadow-2xl rounded-lg w-[90%] max-w-md p-6">
         <div className="flex justify-between items-center mb-2">
           <Lock className="text-teal-400 w-5 h-5" />
           <button onClick={closeModal} className="text-gray-400 hover:text-white transition-colors">
@@ -62,15 +113,38 @@ const PasskeyModal = () => {
         </div>
 
         <AlertDialogHeader className="mb-6">
-          <AlertDialogTitle className="text-2xl font-semibold text-white">
-            Admin Access
-          </AlertDialogTitle>
+          <AlertDialogTitle className="text-2xl font-semibold text-white">Admin Access</AlertDialogTitle>
           <AlertDialogDescription className="text-gray-400 mt-2">
-            Enter your passkey to continue
+            Enter your passkey and select a doctor to continue.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         <div className="space-y-6">
+          {/* Select Doctor Dropdown */}
+          <div>
+            <select
+              value={localDoctor}
+              onChange={handleDoctorChange}
+              className="w-full px-4 py-3 bg-teal-950 text-white border border-teal-800/50 rounded-md 
+                          focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/30 
+                          appearance-none transition-all"
+            >
+              <option value="">Select a Doctor</option>
+              {doctors.length > 0 ? (
+                doctors.map((doctor) => (
+                  <option key={doctor.id} value={doctor.id}>
+                    {doctor.name}
+                  </option>
+                ))
+              ) : (
+                <option value="" disabled>No doctors available</option>
+              )}
+            </select>
+
+            {error && !selectedDoctor && <p className="text-sm text-red-400 mt-1">{error}</p>}
+          </div>
+
+          {/* Passkey Input Field */}
           <div className="relative">
             <input
               type="password"
@@ -82,10 +156,8 @@ const PasskeyModal = () => {
                          placeholder:text-gray-500 transition-all"
               placeholder="••••••"
             />
-            {error && (
-              <p className="absolute -bottom-6 left-0 w-full text-sm text-red-400 text-center">
-                {error}
-              </p>
+            {error && selectedDoctor && (
+              <p className="absolute -bottom-6 left-0 w-full text-sm text-red-400 text-center">{error}</p>
             )}
           </div>
 

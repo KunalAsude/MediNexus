@@ -8,8 +8,8 @@ const Register = async ({ params :{userId}}:SearchParamProps) => {
 
   const user = await getUser(userId);
   const hospitalId = "67a5a7ac2524f85fb9930d01";
- const hospital = await getHospital(hospitalId);
- const doctors = await getDoctorsByHospital(hospitalId);
+  //const hospital = await getHospital(hospitalId);
+  const doctors = await getDoctorsByHospital(hospitalId);
 
     return (
         <div className="flex h-screen max-h-screen">

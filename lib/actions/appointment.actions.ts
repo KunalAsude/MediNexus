@@ -50,10 +50,14 @@ export const getAppointment = async (appointmentId: string) => {
   }
 };
 
-export const getRecentAppointmentList = async () => {
+export const getRecentAppointmentList = async (doctorId = null) => {
   try {
     await connect();
-    const appointments = await Appointment.find().sort({ createdAt: -1 }).lean();
+
+    // Define query: If doctorId is provided, filter by doctor
+    const query = doctorId ? { "primaryPhysician.id": doctorId } : {};
+
+    const appointments = await Appointment.find(query).sort({ createdAt: -1 }).lean();
 
     const counts = appointments.reduce(
       (acc, appointment) => {

@@ -5,7 +5,7 @@ export const PatientFormDefaultValues = {
   lastName: "",
   email: "",
   phone: "",
-  birthDate: new Date(Date.now()),
+  age: "",
   gender: "male" as Gender,
   address: "",
   occupation: "",
@@ -18,7 +18,7 @@ export const PatientFormDefaultValues = {
   currentMedication: "",
   familyMedicalHistory: "",
   pastMedicalHistory: "",
-  identificationType: "Birth Certificate",
+  identificationType: "Aadhaar Card",
   identificationNumber: "",
   identificationDocument: [],
   treatmentConsent: false,
@@ -27,18 +27,19 @@ export const PatientFormDefaultValues = {
 };
 
 export const IdentificationTypes = [
-  "Birth Certificate",
-  "Driver's License",
-  "Medical Insurance Card/Policy",
-  "Military ID Card",
-  "National Identity Card",
-  "Passport",
-  "Resident Alien Card (Green Card)",
-  "Social Security Card",
-  "State ID Card",
-  "Student ID Card",
+  "Aadhaar Card",
+  "PAN Card",
   "Voter ID Card",
+  "Driving License",
+  "Passport",
+  "Ration Card",
+  "NREGA Job Card",
+  "Employee ID Card (Government/PSU)",
+  "Student ID Card",
+  "Birth Certificate",
+  "Medical Insurance Card",
 ];
+
 
 export const Doctors = [
   {

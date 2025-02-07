@@ -5,7 +5,7 @@ export interface IRegisteredPatient extends Document {
   name: string;
   email: string;
   phone: string;
-  birthDate: Date;
+  age: string;
   gender: string;
   address: string;
   occupation?: string;
@@ -30,9 +30,9 @@ const RegisteredPatientSchema = new Schema<IRegisteredPatient>(
   {
     userId: { type: String, required: true },
     name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
+    email: { type: String, required: true},
     phone: { type: String, required: true },
-    birthDate: { type: Date, required: true },
+    age: { type: String, required: true },
     gender: { type: String, required: true },
     address: { type: String, required: true },
     occupation: { type: String },

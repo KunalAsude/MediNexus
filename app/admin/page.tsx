@@ -8,15 +8,21 @@ import { getRecentAppointmentList } from '@/lib/actions/appointment.actions';
 import Link from 'next/link';
 import Loader from "@/components/ui/Loader";
 import { Button } from "@/components/ui/button";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
 
 const Admin = () => {
   const [appointments, setAppointments] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const selectedDoctor = useSelector((state: RootState) => state.doctor.selectedDoctor);
+
+ 
   useEffect(() => {
 
     const fetchAppointments = async () => {
       setLoading(true);
-      const data = await getRecentAppointmentList();
+      
+      const data = await getRecentAppointmentList(selectedDoctor);  
       setAppointments(data);
       setLoading(false);
     };

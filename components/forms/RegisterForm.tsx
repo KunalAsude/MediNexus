@@ -17,6 +17,7 @@ import { GenderOptions, IdentificationTypes, PatientFormDefaultValues } from "@/
 import { Label } from "../ui/label";
 import { SelectItem } from "../ui/select";
 import { FileUploader } from "../ui/FileUploader";
+import { useToast } from "@/hooks/use-toast";
 
 interface Doctor {
     _id: string;
@@ -40,6 +41,8 @@ interface RegisterFormProps {
 const RegisterForm = ({ user, doctors }: RegisterFormProps) => {
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
+    const { toast } = useToast();
+
 
     const form = useForm<z.infer<typeof PatientFormValidation>>({
         resolver: zodResolver(PatientFormValidation),
@@ -70,13 +73,21 @@ const RegisterForm = ({ user, doctors }: RegisterFormProps) => {
         try {
             const patientData = {
                 ...values,
-                userId: user._id,
-                birthDate: new Date(values.birthDate),
+                userId: user?._id,
+                age: values?.age,
                 identificationDocument: formData,
                 primaryPhysician: values.primaryPhysician ? JSON.parse(values.primaryPhysician) : null,
             };
-
+ 
             const patient = await registerPatient(patientData);
+            if (!patient) {
+                toast({
+                    title: "Enter all the required fields",
+                    variant: "destructive",
+                });
+            }
+
+
             if (patient) {
                 router.push(`/patients/${user._id}/new-appointment`);
             }
@@ -131,11 +142,11 @@ const RegisterForm = ({ user, doctors }: RegisterFormProps) => {
 
                 <div className="flex flex-col gap-6 xl:flex-row">
                     <CustomFormField
-                        fieldType={FormFieldTypes.DATE_PICKER}
+                        fieldType={FormFieldTypes.INPUT}
                         control={form.control}
-                        name='birthDate'
-                        label="Date of Birth"
-
+                        name="age"
+                        label="Age"
+                        placeholder="Enter Your Age in Years"
                     />
                     <CustomFormField
                         fieldType={FormFieldTypes.SKELETON}
