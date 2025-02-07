@@ -1,54 +1,51 @@
 "use server";
 
 import mongoose from "mongoose";
-import { formatDateTime } from "../utils";
 import { revalidatePath } from "next/cache";
 import connect from "../mongodb";
-import AppointmentSchema from "../modals/appointmentSchema";
+import Appointment from "../modals/appointmentSchema";
 
- // Ensure you have a MongoDB connection utility
-
- export const createAppointment = async (params: CreateAppointmentParams) => {
+export const createAppointment = async (params: CreateAppointmentParams) => {
   try {
-    // Connect to MongoDB
     await connect();
 
-    // Create a new appointment instance
-    const newAppointment = new AppointmentSchema({
+    const newAppointment = new Appointment({
       userId: params.userId,
-      patientId: params.patientId, // Mapping patientId to the patient field in schema
+      patientId: params.patientId,
       patientName: params.patientName,
-      primaryPhysician: params.primaryPhysician,
+      primaryPhysician: {
+        id: params.primaryPhysician.id,
+        name: params.primaryPhysician.name,
+      },
       reason: params.reason,
-      schedule: params.schedule,
+      schedule: new Date(params.schedule),
       status: params.status,
-      note: params.note || "",  // Default to empty string if note is not provided
+      note: params.note || "",
     });
 
-    console.log("New Appointment:", newAppointment);
-
-    // Save the new appointment to the database
     const savedAppointment = await newAppointment.save();
 
-    // Return the saved appointment object
-    return savedAppointment.toObject();  // Convert to plain object before returning
+    
+    return {
+      ...savedAppointment.toObject(), 
+      _id: savedAppointment._id.toString(), 
+      schedule: savedAppointment.schedule.toISOString(),
+      createdAt: savedAppointment.createdAt.toISOString(),
+      updatedAt: savedAppointment.updatedAt.toISOString(),
+    };
   } catch (error) {
-    console.error("Error creating appointment:", error);
     throw new Error("Failed to create appointment");
   }
 };
 
 
-
-
 export const getAppointment = async (appointmentId: string) => {
   try {
     await connect();
-    const appointment = await AppointmentSchema.findById(appointmentId).lean();
+    const appointment = await Appointment.findById(appointmentId).lean();
     if (!appointment) throw new Error("Appointment not found");
     return appointment;
   } catch (error) {
-    console.error("Error fetching appointment:", error);
     throw new Error("Failed to fetch appointment");
   }
 };
@@ -56,30 +53,20 @@ export const getAppointment = async (appointmentId: string) => {
 export const getRecentAppointmentList = async () => {
   try {
     await connect();
-    const appointments = await AppointmentSchema.find()
-      .sort({ createdAt: -1 })
-      .lean();
+    const appointments = await Appointment.find().sort({ createdAt: -1 }).lean();
 
-    const initialCounts = {
-      scheduledCount: 0,
-      pendingCount: 0,
-      cancelledCount: 0,
-    };
+    const counts = appointments.reduce(
+      (acc, appointment) => {
+        if (appointment.status === "scheduled") acc.scheduledCount += 1;
+        else if (appointment.status === "pending") acc.pendingCount += 1;
+        else if (appointment.status === "cancelled") acc.cancelledCount += 1;
+        return acc;
+      },
+      { scheduledCount: 0, pendingCount: 0, cancelledCount: 0 }
+    );
 
-    const counts = appointments.reduce((acc, appointment) => {
-      if (appointment.status === "scheduled") acc.scheduledCount += 1;
-      else if (appointment.status === "pending") acc.pendingCount += 1;
-      else if (appointment.status === "cancelled") acc.cancelledCount += 1;
-      return acc;
-    }, initialCounts);
-
-    return {
-      totalCount: appointments.length,
-      ...counts,
-      documents: appointments,
-    };
+    return { totalCount: appointments.length, ...counts, documents: appointments };
   } catch (error) {
-    console.error("Error fetching appointments:", error);
     throw new Error("Failed to fetch appointment list");
   }
 };
@@ -92,50 +79,41 @@ export const updateAppointment = async ({
 }: UpdateAppointmentParams) => {
   try {
     await connect();
-    const updatedAppointment = await AppointmentSchema.findByIdAndUpdate(
-      appointmentId,
-      {
-        $set: {
-          primaryPhysician: appointment.primaryPhysician,
-          schedule: appointment.schedule,
-          status: appointment.status,
-          cancellationReason: appointment.cancellationReason || "",
-        },
-      },
-      { new: true }
-    ).lean();
+    if (!appointmentId) throw new Error("Missing appointment ID");
 
-    if (!updatedAppointment) {
-      throw new Error("Appointment not found");
+    const updateFields: Record<string, any> = {
+      primaryPhysician: appointment.primaryPhysician
+        ? JSON.parse(JSON.stringify(appointment.primaryPhysician))
+        : null,
+      schedule: appointment.schedule ? new Date(appointment.schedule) : null,
+    };
+
+    if (type === "cancel") {
+      updateFields.status = "cancelled";
+      updateFields.cancellationReason = appointment.cancellationReason || "Not provided";
+    } else {
+      updateFields.status = appointment.status || "scheduled";
+      updateFields.$unset = { cancellationReason: 1 };
     }
 
-    // const smsMessage = `Greetings from MediNexus. ${
-    //   type === "schedule"
-    //     ? `Your appointment is confirmed for ${
-    //         formatDateTime(appointment.schedule!).dateTime
-    //       } with Dr. ${appointment.primaryPhysician}`
-    //     : `We regret to inform you that your appointment for ${
-    //         formatDateTime(appointment.schedule!).dateTime
-    //       } is cancelled. Reason: ${appointment.cancellationReason}`
-    // }`;
+    const updatedAppointment = await Appointment.findByIdAndUpdate(
+      appointmentId,
+      { $set: updateFields },
+      { new: true }
+    );
 
-    // await sendSMSNotification(userId, smsMessage);
+    if (!updatedAppointment) throw new Error("Appointment not found");
 
-    // revalidatePath("/admin");
-    return updatedAppointment;
+   
+    return {
+      ...updatedAppointment.toObject(),
+      _id: updatedAppointment._id.toString(), 
+      schedule: updatedAppointment.schedule.toISOString(),
+      createdAt: updatedAppointment.createdAt.toISOString(),
+      updatedAt: updatedAppointment.updatedAt.toISOString(),
+    };
   } catch (error) {
-    console.error("Error updating appointment:", error);
     throw new Error("Failed to update appointment");
   }
 };
 
-// export const sendSMSNotification = async (userId: string, content: string) => {
-//   try {
-//     console.log(`Sending SMS to user ${userId}: ${content}`);
-//     // You need to implement actual SMS sending logic
-//     return { success: true, message: "SMS sent" };
-//   } catch (error) {
-//     console.error("An error occurred while sending SMS:", error);
-//     throw new Error("Failed to send SMS");
-//   }
-// };

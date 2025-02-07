@@ -10,7 +10,8 @@ import { ArrowLeft } from 'lucide-react';
 const Success = async ({ params: { userId }, searchParams }: SearchParamProps) => {
     const appointmentId = (searchParams?.appointmentId as string) || '';
     const appointment = await getAppointment(appointmentId);
-    const doctor = Doctors.find((doc) => doc.name === appointment.primaryPhysician);
+    const primaryPhysician = appointment?.primaryPhysician;
+    
 
     return (
         <div className="flex h-screen max-h-screen px-[5%] items-center justify-center relative">
@@ -57,8 +58,8 @@ const Success = async ({ params: { userId }, searchParams }: SearchParamProps) =
                 <section className="request-details">
                     <p>Appointment Details :</p>
                     <div className="flex items-center gap-6">
-                        <Image src={doctor?.image!} alt="doctor" width={40} height={40} />
-                        <p className="whitespace-nowrap">Dr. {doctor?.name}</p>
+                        <Image src={primaryPhysician?.image!} alt="doctor" width={40} height={40} />
+                        <p className="whitespace-nowrap">{primaryPhysician?.name}</p>
                     </div>
                     <div className="flex gap-2">
                         <Image src="/assets/icons/calendar.svg" height={24} width={24} alt="calender" />

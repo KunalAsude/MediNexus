@@ -1,12 +1,15 @@
 import RegisterForm from '@/components/forms/RegisterForm'
-import { getUser } from '@/lib/actions/patient.actions'
+import { getDoctorsByHospital, getHospital, getUser } from '@/lib/actions/patient.actions'
 import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'
 
 const Register = async ({ params :{userId}}:SearchParamProps) => {
 
-    const user = await getUser(userId);
+  const user = await getUser(userId);
+  const hospitalId = "67a5a7ac2524f85fb9930d01";
+ const hospital = await getHospital(hospitalId);
+ const doctors = await getDoctorsByHospital(hospitalId);
 
     return (
         <div className="flex h-screen max-h-screen">
@@ -20,7 +23,7 @@ const Register = async ({ params :{userId}}:SearchParamProps) => {
           />
           <div className="text-2xl font-bold flex items-center justify-center text-teal-300">MediNexus</div>
         </div>
-        <RegisterForm user={user} />
+        <RegisterForm user={user} doctors={doctors} />
         <p className="copyright py-12">© MediNexus 2025</p>
         </div>
       </section>

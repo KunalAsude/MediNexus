@@ -1,78 +1,92 @@
 "use client"
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { Button } from "@/components/ui/button"
-import { Form, FormControl } from "@/components/ui/form"
-import CustomFormField from "../customFormField"
-import SubmitButton from "../SubmitButton"
-import { useState } from "react"
-import { PatientFormValidation, UserFormValidation } from "@/lib/Validation"
-import { useRouter } from "next/navigation"
-import { createUser, registerPatient } from "@/lib/actions/patient.actions"
-import { FormFieldTypes } from "./PatientForm"
-import { RadioGroup, RadioGroupItem } from "../ui/radio-group"
-import { Doctors, GenderOptions, IdentificationTypes, PatientFormDefaultValues } from "@/constants"
-import { Label } from "../ui/label"
-import Image from "next/image"
-import { SelectItem } from "../ui/select"
-import { FileUploader } from "../ui/FileUploader"
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Form, FormControl } from "@/components/ui/form";
+import CustomFormField from "../customFormField";
+import SubmitButton from "../SubmitButton";
+import { useEffect, useState } from "react";
+import { PatientFormValidation } from "@/lib/Validation";
+import { useRouter } from "next/navigation";
+import { registerPatient } from "@/lib/actions/patient.actions";
+import { FormFieldTypes } from "./PatientForm";
+import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
+import { GenderOptions, IdentificationTypes, PatientFormDefaultValues } from "@/constants";
+import { Label } from "../ui/label";
+import { SelectItem } from "../ui/select";
+import { FileUploader } from "../ui/FileUploader";
 
+interface Doctor {
+    _id: string;
+    name: string;
+    specialization: string;
+    image: string;
+}
 
-const RegisterForm = ({ user }: { user: User }) => {
+interface User {
+    _id: string;
+    name: string;
+    email: string;
+    phone: string;
+}
+
+interface RegisterFormProps {
+    user: User;
+    doctors: Doctor[];
+}
+
+const RegisterForm = ({ user, doctors }: RegisterFormProps) => {
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
-  
+
     const form = useForm<z.infer<typeof PatientFormValidation>>({
-      resolver: zodResolver(PatientFormValidation),
-      defaultValues: {
-        ...PatientFormDefaultValues,
-        name: "",
-        email: "",
-        phone: "",
-        identificationDocument: [], 
-      },
+        resolver: zodResolver(PatientFormValidation),
+        defaultValues: {
+            ...PatientFormDefaultValues,
+            name: user?.name || "",
+            email: user?.email || "",
+            phone: user?.phone || "",
+            identificationDocument: [],
+        },
     });
-  
+
     const onSubmit = async (values: z.infer<typeof PatientFormValidation>) => {
         setIsLoading(true);
-      
+
         let formData;
-        // Handle file upload for identification document
         if (values.identificationDocument && values.identificationDocument.length > 0) {
-          const blobFile = new Blob([values.identificationDocument[0]], {
-            type: values.identificationDocument[0].type,
-          });
-          formData = new FormData();
-          formData.append("blobFile", blobFile);
-          formData.append("fileName", values.identificationDocument[0].name);
+            const file = values.identificationDocument[0];
+
+            if (file) {
+                const blobFile = new Blob([file], { type: file.type });
+                formData = new FormData();
+                formData.append("blobFile", blobFile);
+                formData.append("fileName", file.name);
+            }
         }
-      
+
         try {
-          const patientData = {
-            ...values,
-            //@ts-ignore
-            userId: user._id,
-            birthDate: new Date(values.birthDate),
-            identificationDocument: formData,
-            primaryPhysician: values.primaryPhysician, 
-          };
-      
-          console.log("patientData", patientData);
-          //@ts-ignore
-          const patient = await registerPatient(patientData); 
-          if (patient) {
-            //@ts-ignore
-            router.push(`/patients/${user._id}/new-appointment`);
-          }
+            const patientData = {
+                ...values,
+                userId: user._id,
+                birthDate: new Date(values.birthDate),
+                identificationDocument: formData,
+                primaryPhysician: values.primaryPhysician ? JSON.parse(values.primaryPhysician) : null,
+            };
+
+            const patient = await registerPatient(patientData);
+            if (patient) {
+                router.push(`/patients/${user._id}/new-appointment`);
+            }
         } catch (error) {
-          console.log(error);
+            console.log(error);
         }
-      
+
         setIsLoading(false);
-      };
-      
+    };
+
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-12 flex-1">
@@ -80,6 +94,7 @@ const RegisterForm = ({ user }: { user: User }) => {
                     <h1 className="header">Welcome 👋</h1>
                     <p className="text-dark-700">Let us know a bit more about you...</p>
                 </section>
+
                 <section className="space-y-6">
                     <div className="mb-9 space-y-1">
                         <h2 className="sub-header">Personal Information</h2>
@@ -187,23 +202,17 @@ const RegisterForm = ({ user }: { user: User }) => {
                         <h2 className="sub-header">Medical Information</h2>
                     </div>
                 </section>
+
                 <CustomFormField
                     fieldType={FormFieldTypes.SELECT}
                     control={form.control}
                     name="primaryPhysician"
-                    label="Primary care physician"
+                    label="Primary Care Physician"
                     placeholder="Select a physician"
                 >
-                    {Doctors.map((doctor, i) => (
-                        <SelectItem key={doctor.name + i} value={doctor.name}>
+                    {doctors.map((doctor) => (
+                        <SelectItem key={doctor._id} value={JSON.stringify({ id: doctor._id, name: doctor.name })}>
                             <div className="flex cursor-pointer items-center gap-2">
-                                <Image
-                                    src={doctor.image}
-                                    width={32}
-                                    height={32}
-                                    alt="doctor"
-                                    className="rounded-full border border-dark-500"
-                                />
                                 <p>{doctor.name}</p>
                             </div>
                         </SelectItem>

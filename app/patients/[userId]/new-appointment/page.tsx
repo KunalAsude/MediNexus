@@ -9,7 +9,7 @@ import Link from "next/link";
 export default async function NewAppointment({ params: { userId } }: SearchParamProps) {
 
   const patient = await getRegisteredPatient(userId);
-  console.log(patient);
+  console.log("registredpatient", patient);
   return (
     <div className="flex h-screen max-h-screen">
       <Image

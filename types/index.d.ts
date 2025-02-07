@@ -14,7 +14,7 @@ declare type SearchParamProps = {
     phone: string;
   }
   declare interface User extends CreateUserParams {
-    $id: string;
+    _id: string;
   }
   
   declare interface RegisterUserParams extends CreateUserParams {
@@ -25,29 +25,30 @@ declare type SearchParamProps = {
     occupation: string;
     emergencyContactName: string;
     emergencyContactNumber: string;
-    primaryPhyisician: string;
+    primaryPhysician: { id: string; name: string };
     insuranceProvider: string;
     insurancePolicyNumber: string;
-    allergies: string | undefined;
-    currentMedication: string | undefined;
-    familyMedicalHistory: string | undefined;
-    pastMedicalHistory: string | undefined;
-    identificationType: string | undefined;
-    identificationNumber: string | undefined;
-    identificationDocument: FormData | undefined;
+    allergies?: string;
+    currentMedication?: string;
+    familyMedicalHistory?: string;
+    pastMedicalHistory?: string;
+    identificationType?: string;
+    identificationNumber?: string;
+    identificationDocument?: FormData;
     privacyConsent: boolean;
   }
   
-  declare type CreateAppointmentParams = {
+  type CreateAppointmentParams = {
     userId: string;
     patientId: string;
     patientName: string;
-    primaryPhysician: string;
+    primaryPhysician: { id: string; name: string }; // Updated to store both id and name
     reason: string;
     schedule: Date;
     status: Status;
-    note: string | undefined;
-  };
+    note?: string; // Optional note
+};
+
   
   declare type UpdateAppointmentParams = {
     appointmentId: string;

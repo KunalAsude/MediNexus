@@ -6,6 +6,9 @@ import connect from "../mongodb";
 import User from "../modals/userModel";
 import { ObjectId } from "mongoose";
 import RegisteredPatient from "../modals/registerPatientModal";
+import Hospital from "../modals/hospitalmodal";
+import mongoose from "mongoose";
+import doctorModal from "../modals/doctorModal";
 
 
 export const createUser = async (user: { name: string; email: string; phone: string }) => {
@@ -55,6 +58,7 @@ export const getUser = async (userId: string) => {
 
 export const registerPatient = async ({
   identificationDocument,
+  primaryPhysician, // Extract primaryPhysician separately
   ...patient
 }: RegisterUserParams) => {
   try {
@@ -69,9 +73,15 @@ export const registerPatient = async ({
     //   fileUrl = await uploadFileToStorage(fileBuffer, fileName);
     // }
 
+    // Ensure primaryPhysician.id is properly converted to ObjectId
+    // if (primaryPhysician && primaryPhysician.id) {
+    //   primaryPhysician.id = new mongoose.Types.ObjectId(primaryPhysician.id);
+    // }
+
     // Create new patient record in MongoDB
     const newPatient = await RegisteredPatient.create({
       identificationDocumentUrl: fileUrl,
+      primaryPhysician,
       ...patient,
     });
 
@@ -102,3 +112,46 @@ export const getRegisteredPatient = async (userId: string) => {
     throw new Error("Unable to fetch registered patient data");
   }
 };
+
+
+
+ // Ensure correct import
+
+export const getHospital = async (hospitalId: string) => {
+  try {
+    await connect();
+  
+
+    const objectId = new mongoose.Types.ObjectId(hospitalId); // Convert to ObjectId
+
+
+    const hospital = await Hospital.findById(objectId).lean(); // Ensure correct model
+    if (!hospital) throw new Error("Hospital not found");
+
+    
+    return JSON.parse(JSON.stringify(hospital));
+  } catch (error) {
+    console.error("Error fetching hospital:", error);
+    return null;
+  }
+};
+
+export const getDoctorsByHospital = async (hospitalId: string) => {
+  try {
+    await connect();
+    
+
+    const objectId = new mongoose.Types.ObjectId(hospitalId); // Convert to ObjectId
+
+    const doctors = await doctorModal.find({ hospitalId: objectId }).lean(); // Find all doctors for this hospital
+    if (!doctors.length) throw new Error("No doctors found for this hospital");
+
+    return JSON.parse(JSON.stringify(doctors));
+  } catch (error) {
+    console.error("Error fetching doctors:", error);
+    return [];
+  }
+};
+
+
+
