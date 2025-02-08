@@ -59,7 +59,7 @@ export default function Home() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {/* Quick Access Cards */}
                     <Link href="/patients" className="group" onClick={(e) => handleLinkClick1('Register Patient Portal')}>
-                        <Card className="h-32 bg-teal-900/20 border-teal-400/10 hover:bg-teal-900/30 transition-all hover:scale-[1.02]">
+                        <Card className="h-40 bg-teal-900/20 border-teal-400/10 hover:bg-teal-900/30 transition-all hover:scale-[1.02]">
                             <CardContent className="flex flex-col items-center justify-center h-full p-4 text-center">
                                 <Users className="h-10 w-10 text-teal-400 mb-2 group-hover:scale-110 transition-transform" />
                                 <h3 className="text-lg font-semibold text-teal-50">Patient Portal</h3>
@@ -70,7 +70,7 @@ export default function Home() {
 
                     {/* Hospital Details Link with Toast */}
                     <Link href="/hospital" className="group" onClick={(e) => handleLinkClick1('Hospital Details')}>
-                        <Card className="h-32 bg-teal-900/20 border-teal-400/10 hover:bg-teal-900/30 transition-all hover:scale-[1.02]">
+                        <Card className="h-40 bg-teal-900/20 border-teal-400/10 hover:bg-teal-900/30 transition-all hover:scale-[1.02]">
                             <CardContent className="flex flex-col items-center justify-center h-full p-4 text-center">
                                 <ClipboardList className="h-10 w-10 text-teal-400 mb-2 group-hover:scale-110 transition-transform" />
                                 <h3 className="text-lg font-semibold text-teal-50">Hospital Details</h3>
@@ -83,7 +83,7 @@ export default function Home() {
                     <div>
                         {/* Admin Panel Card */}
                         <div onClick={() => setShowPasskeyModal(true)} className="group cursor-pointer">
-                            <Card className="h-32 bg-teal-900/20 border-teal-400/10 hover:bg-teal-900/30 transition-all hover:scale-[1.02]">
+                            <Card className="h-40 bg-teal-900/20 border-teal-400/10 hover:bg-teal-900/30 transition-all hover:scale-[1.02]">
                                 <CardContent className="flex flex-col items-center justify-center h-full p-4 text-center">
                                     <Activity className="h-10 w-10 text-teal-400 mb-2 group-hover:scale-110 transition-transform" />
                                     <h3 className="text-lg font-semibold text-teal-50">Doctors Panel</h3>
@@ -98,7 +98,7 @@ export default function Home() {
 
                     {/* Medical Store Link with Toast */}
                     <Link href="#" className="group" onClick={(e) => handleLinkClick(e, 'Medical Store')}>
-                        <Card className="h-32 bg-teal-900/20 border-teal-400/10 hover:bg-teal-900/30 transition-all hover:scale-[1.02]">
+                        <Card className="h-40 bg-teal-900/20 border-teal-400/10 hover:bg-teal-900/30 transition-all hover:scale-[1.02]">
                             <CardContent className="flex flex-col items-center justify-center h-full p-4 text-center">
                                 <Store className="h-10 w-10 text-teal-400 mb-2 group-hover:scale-110 transition-transform" />
                                 <h3 className="text-lg font-semibold text-teal-50">Medical Store</h3>
@@ -129,9 +129,7 @@ export default function Home() {
                             <div className="p-4 bg-teal-950/40 rounded-xl text-white text-base border-l-8 border-purple-500 shadow-lg">
                                 <p className="font-semibold">🖥️ New advanced MRI scanning machine installed in the radiology department.</p>
                             </div>
-                            <div className="p-4 bg-teal-950/40 rounded-xl text-white text-base border-l-8 border-green-500 shadow-lg">
-                                <p className="font-semibold">💉 COVID-19 booster shots now available at the outpatient department.</p>
-                            </div>
+                            
                         </div>
                     </div>
                 </div>
