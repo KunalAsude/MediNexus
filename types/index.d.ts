@@ -25,7 +25,6 @@ declare type SearchParamProps = {
     occupation: string;
     emergencyContactName: string;
     emergencyContactNumber: string;
-    primaryPhysician: { id: string; name: string };
     insuranceProvider: string;
     insurancePolicyNumber: string;
     allergies?: string;

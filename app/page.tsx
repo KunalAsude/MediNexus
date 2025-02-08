@@ -1,5 +1,6 @@
 
-import Dashboard from "./dashboard/Dashboard";
+import Dashboard from "./dashboard/page";
+import CoverPage from "./main/page";
 
 
 
@@ -8,7 +9,7 @@ const Home = ({ searchParams }: SearchParamProps) => {
   
   return (
     <>
-    <Dashboard/>
+    <CoverPage/>
     </>
   )
 }

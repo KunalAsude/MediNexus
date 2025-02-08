@@ -24,8 +24,8 @@ interface Doctor {
   name: string;
 }
 
-const PasskeyModal = () => {
-  const [open, setOpen] = useState(true);
+const PasskeyModal = ({ open, onClose }: { open: boolean; onClose: () => void }) => {
+  const [isOpen, setIsOpen] = useState(open);
   const [passkey, setPasskey] = useState("");
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [error, setError] = useState("");
@@ -34,13 +34,15 @@ const PasskeyModal = () => {
   const { toast } = useToast();
   const dispatch = useDispatch<AppDispatch>();
   const [localDoctor, setLocalDoctor] = useState("");
+  const hospitalId = useSelector((state: any) => state.hospital.selectedHospitalId);
 
 
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
-        const hospitalId = "67a5a7ac2524f85fb9930d01";
+        console.log('hospitalId:', hospitalId);
         const doctorsData = await getDoctorsByHospital(hospitalId);
+        console.log(doctorsData);
 
 
         const formattedDoctors = doctorsData.map((doc: any) => ({
@@ -57,11 +59,10 @@ const PasskeyModal = () => {
   }, []);
 
   const closeModal = () => {
-    setOpen(false);
     setPasskey(""); // Reset passkey field
     setLocalDoctor(""); // Reset doctor selection in UI
-    setError(""); // Clear any errors
-    router.push("/");
+    setError(""); 
+    onClose();
   };
 
   const validatePasskey = async (e: React.FormEvent) => {
@@ -103,7 +104,7 @@ const PasskeyModal = () => {
   };
 
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
+    <AlertDialog open={open} onOpenChange={setIsOpen}>
       <AlertDialogContent className="bg-[linear-gradient(135deg,#042F2E,#012621)] border-teal-800/30 shadow-2xl rounded-lg w-[90%] max-w-md p-6">
         <div className="flex justify-between items-center mb-2">
           <Lock className="text-teal-400 w-5 h-5" />
@@ -144,7 +145,7 @@ const PasskeyModal = () => {
             {error && !selectedDoctor && <p className="text-sm text-red-400 mt-1">{error}</p>}
           </div>
 
-          {/* Passkey Input Field */}
+         
           <div className="relative">
             <input
               type="password"

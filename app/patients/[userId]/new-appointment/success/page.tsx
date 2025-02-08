@@ -21,7 +21,7 @@ const Success = async ({ params: { userId }, searchParams }: SearchParamProps) =
                 className="shad-primary-btn bg-[linear-gradient(to_right,#064E4C,#024632,#013220)] border-2 border-cyan-900 mt-4 absolute top-4 left-4 sm:left-1 sm:top-1 flex items-center gap-2 sm:gap-0"
                 asChild
             >
-                <Link href="/" className="flex items-center">
+                <Link href="/dashboard" className="flex items-center">
                     <div className='flex gap-2 justify-center items-center'>
                     <ArrowLeft className="h-5 w-5 sm:h-6 sm:w-6" />
                     <span className="hidden sm:block">Back to Dashboard</span>

@@ -14,6 +14,7 @@ import { createAppointment, updateAppointment } from "@/lib/actions/appointment.
 import { getDoctorsByHospital } from "@/lib/actions/patient.actions";
 import { toast } from "sonner";
 import { Appointment } from "@/types/appwrite.types";
+import { useSelector } from "react-redux";
 
 export enum FormFieldTypes {
   INPUT = "input",
@@ -77,7 +78,7 @@ const AppointmentForm = ({
   const [isLoading, setIsLoading] = useState(false);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const router = useRouter();
-  const hospitalId = "67a5a7ac2524f85fb9930d01";
+  const hospitalId = useSelector((state: any) => state.hospital.selectedHospitalId);
 
   const AppointmentFormValidation = getAppointmentSchema(type);
   

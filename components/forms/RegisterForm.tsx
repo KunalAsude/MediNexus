@@ -76,7 +76,6 @@ const RegisterForm = ({ user, doctors }: RegisterFormProps) => {
                 userId: user?._id,
                 age: values?.age,
                 identificationDocument: formData,
-                primaryPhysician: values.primaryPhysician ? JSON.parse(values.primaryPhysician) : null,
             };
  
             const patient = await registerPatient(patientData);
@@ -214,21 +213,6 @@ const RegisterForm = ({ user, doctors }: RegisterFormProps) => {
                     </div>
                 </section>
 
-                <CustomFormField
-                    fieldType={FormFieldTypes.SELECT}
-                    control={form.control}
-                    name="primaryPhysician"
-                    label="Primary Care Physician"
-                    placeholder="Select a physician"
-                >
-                    {doctors.map((doctor) => (
-                        <SelectItem key={doctor._id} value={JSON.stringify({ id: doctor._id, name: doctor.name })}>
-                            <div className="flex cursor-pointer items-center gap-2">
-                                <p>{doctor.name}</p>
-                            </div>
-                        </SelectItem>
-                    ))}
-                </CustomFormField>
                 <div className="flex flex-col gap-6 xl:flex-row">
                     <CustomFormField
                         fieldType={FormFieldTypes.INPUT}

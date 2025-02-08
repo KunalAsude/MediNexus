@@ -24,7 +24,7 @@ const HospitalSchema = new mongoose.Schema(
     description: String,
     status: String,
   },
-  { collection: "hospitals" } // ✅ Ensure the collection name is correct
+  { collection: "hospitals" }
 );
 
 export default mongoose.models.Hospital || mongoose.model("Hospital", HospitalSchema);

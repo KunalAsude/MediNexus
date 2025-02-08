@@ -48,8 +48,8 @@ export default function Home() {
                         <div className="text-lg font-bold flex items-center justify-center text-teal-400">MediNexus</div>
                     </div>
                 </Link>
-                <p className="text-sm sm:text-xl font-bold flex items-center justify-center text-teal-400">
-                    Dashboard
+                <p className="text-sm sm:text-lg font-bold flex items-center justify-center text-teal-400">
+                    Hospital Dashboard
                 </p>
 
             </header>
@@ -86,14 +86,14 @@ export default function Home() {
                             <Card className="h-32 bg-teal-900/20 border-teal-400/10 hover:bg-teal-900/30 transition-all hover:scale-[1.02]">
                                 <CardContent className="flex flex-col items-center justify-center h-full p-4 text-center">
                                     <Activity className="h-10 w-10 text-teal-400 mb-2 group-hover:scale-110 transition-transform" />
-                                    <h3 className="text-lg font-semibold text-teal-50">Admin Panel</h3>
+                                    <h3 className="text-lg font-semibold text-teal-50">Doctors Panel</h3>
                                     <p className="text-xs text-teal-300/70">Manage appointments & records</p>
                                 </CardContent>
                             </Card>
                         </div>
 
                         {/* Render PasskeyModal when clicked */}
-                        {showPasskeyModal && <PasskeyModal />}
+                        {showPasskeyModal && <PasskeyModal open={showPasskeyModal} onClose={() => setShowPasskeyModal(false)} />}
                     </div>
 
                     {/* Medical Store Link with Toast */}

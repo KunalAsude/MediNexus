@@ -3,6 +3,7 @@ import doctorReducer from "./slice/doctorSlice";
 import storage from "redux-persist/lib/storage";
 import { persistReducer, persistStore } from "redux-persist";
 import { combineReducers } from "redux";
+import hospitalReducer from "./slice/hospitalSlice";
 
 const persistConfig = {
   key: "root",
@@ -11,7 +12,8 @@ const persistConfig = {
 };
 
 const rootReducer = combineReducers({
-  doctor: doctorReducer, // ✅ Ensuring doctor state is persisted
+  doctor: doctorReducer,
+  hospital: hospitalReducer
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

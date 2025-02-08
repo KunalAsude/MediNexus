@@ -22,7 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body
         className={cn(
-          "min-h-screen bg-[linear-gradient(to_right,#042F2E,#012621,#002A1C)] font-sans antialiased  remove-scrollbar", 
+          "min-h-screen bg-[linear-gradient(to_right,#042F2E,#012621,#002A1C)] font-sans antialiased  remove-scrollbar scroll-smooth", 
           fontSans.variable
         )}
       >

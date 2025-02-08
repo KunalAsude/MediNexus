@@ -1,6 +1,6 @@
 "use client"
 import { Card, CardContent } from "@/components/ui/card"
-import { Building, Users, Stethoscope, Bed, Ambulance, Clock } from "lucide-react"
+import { Building, Users, Stethoscope, Bed, Ambulance, Clock, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
 import HospitalCard from "@/components/ui/HospitalCard"
@@ -8,6 +8,7 @@ import { departments } from "@/constants"
 import Image from "next/image"
 import { getHospital } from "@/lib/actions/patient.actions"
 import { useEffect, useState } from "react"
+import { useSelector } from "react-redux"
 export interface Hospital {
   _id: string;
   name: string;
@@ -34,19 +35,31 @@ export interface Hospital {
 }
 
 export default function HospitalDetails() {
-  const { toast } = useToast()
-  const [hospital, setHospital] = useState<Hospital | null>(null);
+  const { toast } = useToast();
+  const [hospital, setHospital] = useState<Hospital | null>(
+    () => JSON.parse(localStorage.getItem("hospital") || "null") // Load from localStorage
+  );
+  const hospitalId = useSelector((state: any) => state.hospital.selectedHospitalId);
 
   useEffect(() => {
-    const getHospitaldetails = async () => {
-      const hospitalId = "67a5a7ac2524f85fb9930d01";
-      const hospitalData = await getHospital(hospitalId);
-      setHospital(hospitalData);
+    if (!hospitalId) return;
 
-    }
-    getHospitaldetails();
+    const getHospitalDetails = async () => {
+      try {
+        const hospitalData = await getHospital(hospitalId);
+        console.log(hospitalData);
 
-  }, [])
+        if (hospitalData) {
+          setHospital(hospitalData);
+          localStorage.setItem("hospital", JSON.stringify(hospitalData)); // Store in localStorage
+        }
+      } catch (error) {
+        toast({ title: "Error", description: "Failed to fetch hospital data." });
+      }
+    };
+
+    getHospitalDetails();
+  }, [hospitalId]);
 
 
   const handleLinkClick = (e: React.MouseEvent, featureName: string) => {
@@ -62,32 +75,40 @@ export default function HospitalDetails() {
     <div className="h-screen flex flex-col">
       {/* Header */}
       <header className="admin-header mb-2 flex justify-between items-center px-4">
-        {/* MediNexus Logo - Hidden on Small Screens */}
-        <Link href="/" className="cursor-pointer">
-          <div className="hidden sm:flex flex-row items-center">
-            <img
-              src="https://img.icons8.com/arcade/64/hospital.png"
-              alt="MediNexus Logo"
-              height="100px"
-              width="100px"
-              className="h-10 w-auto"
-            />
-            <div className="text-lg font-bold text-teal-400 ml-2">MediNexus</div>
-          </div>
-        </Link>
+  {/* MediNexus Logo - Hidden on Extra-Small Screens */}
+  <Link href="/dashboard" className="hidden sm:flex flex-row items-center cursor-pointer">
+    <img
+      src="https://img.icons8.com/arcade/64/hospital.png"
+      alt="MediNexus Logo"
+      height="100"
+      width="100"
+      className="h-10 w-auto"
+    />
+    <div className="text-lg font-bold text-teal-400 ml-2">MediNexus</div>
+  </Link>
 
-        {/* Cityline Hospital Logo and Name */}
-        <div className="flex flex-row gap-2 sm:gap-1 items-center cursor-pointer">
-          <Image
-            src="/assets/images/cityline.webp"
-            alt="Cityline Hospital"
-            width={100}
-            height={100}
-            className="h-10 sm:h-6 w-auto rounded-lg"
-          />
-          <p className="text-lg sm:text-sm font-bold text-teal-400">{hospital?.name}</p>
-        </div>
-      </header>
+  {/* Back Button for Extra-Small Screens */}
+  <Link
+    href="/dashboard"
+    className="flex sm:hidden items-center text-sm font-bold text-teal-400 hover:underline cursor-pointer"
+  >
+    <ArrowLeft className="h-8 w-8 sm:h-6 sm:w-6" />
+  </Link>
+
+  {/* Hospital Logo and Name - Adjust for Mobile Screens */}
+  <div className="flex flex-row gap-4 sm:gap-1 items-center cursor-pointer">
+    <Image
+      src={hospital?.image || "https://img.icons8.com/arcade/64/hospital.png"}
+      alt={hospital?.name || "Hospital"}
+      width={100}
+      height={100}
+      className="h-16 w-16 sm:h-12 sm:w-12 md:h-10 md:w-10 rounded-lg object-cover"
+    />
+    <p className="text-lg sm:text-sm font-bold text-teal-400">{hospital?.name}</p>
+  </div>
+</header>
+
+
 
 
 
@@ -99,10 +120,10 @@ export default function HospitalDetails() {
 
         {/* Hospital Overview */}
         <section className="mb-8">
-          <HospitalCard  />
+          <HospitalCard />
           <p className="text-gray-300 text-xl font-bold  mt-4">
-          {hospital?.description}
-        </p>
+            {hospital?.description}
+          </p>
         </section>
 
 

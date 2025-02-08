@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document, Types } from "mongoose";
+import mongoose, { Schema, Document } from "mongoose";
 
 export interface IRegisteredPatient extends Document {
   userId: string;
@@ -11,7 +11,6 @@ export interface IRegisteredPatient extends Document {
   occupation?: string;
   emergencyContactName: string;
   emergencyContactNumber: string;
-  primaryPhysician?: { id: Types.ObjectId; name: string }; 
   insuranceProvider?: string;
   insurancePolicyNumber?: string;
   allergies?: string;
@@ -30,7 +29,7 @@ const RegisteredPatientSchema = new Schema<IRegisteredPatient>(
   {
     userId: { type: String, required: true },
     name: { type: String, required: true },
-    email: { type: String, required: true},
+    email: { type: String, required: true },
     phone: { type: String, required: true },
     age: { type: String, required: true },
     gender: { type: String, required: true },
@@ -38,16 +37,6 @@ const RegisteredPatientSchema = new Schema<IRegisteredPatient>(
     occupation: { type: String },
     emergencyContactName: { type: String, required: true },
     emergencyContactNumber: { type: String, required: true },
-    primaryPhysician: {
-      type: new Schema(
-        {
-          id: { type: mongoose.Schema.Types.ObjectId, ref: "Doctor", required: true },
-          name: { type: String, required: true },
-        },
-        { _id: false }
-      ),
-      required: false,
-    },
     insuranceProvider: { type: String },
     insurancePolicyNumber: { type: String },
     allergies: { type: String },

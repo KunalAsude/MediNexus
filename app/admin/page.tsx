@@ -37,7 +37,7 @@ const Admin = () => {
   return (
     <div className='flex mx-auto max-w-full flex-col space-y-14'>
       <header className='admin-header'>
-        <Link href='/' className='cursor-pointer'>
+        <Link href='/dashboard' className='cursor-pointer'>
           <div className="flex flex-row align-middle">
             <img
               src="https://img.icons8.com/arcade/64/hospital.png"
@@ -49,7 +49,7 @@ const Admin = () => {
             <div className="text-lg font-bold flex items-center justify-center text-teal-500">MediNexus</div>
           </div>
         </Link>
-        <p className='text-sm font-bold flex items-center justify-center text-teal-500'>Admin Dashboard</p>
+        <p className='text-sm font-bold flex items-center justify-center text-teal-500'>Dostors Dashboard</p>
       </header>
       <main className='admin-main remove-scrollbar'>
         <section className='w-full flex justify-between items-center'>

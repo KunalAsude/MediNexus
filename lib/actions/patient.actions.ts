@@ -9,6 +9,7 @@ import RegisteredPatient from "../modals/registerPatientModal";
 import Hospital from "../modals/hospitalmodal";
 import mongoose from "mongoose";
 import doctorModal from "../modals/doctorModal";
+import hospitalmodal from "../modals/hospitalmodal";
 
 
 export const createUser = async (user: { name: string; email: string; phone: string }) => {
@@ -58,7 +59,6 @@ export const getUser = async (userId: string) => {
 
 export const registerPatient = async ({
   identificationDocument,
-  primaryPhysician, // Extract primaryPhysician separately
   ...patient
 }: RegisterUserParams) => {
   try {
@@ -81,7 +81,6 @@ export const registerPatient = async ({
     // Create new patient record in MongoDB
     const newPatient = await RegisteredPatient.create({
       identificationDocumentUrl: fileUrl,
-      primaryPhysician,
       ...patient,
     });
 
@@ -141,15 +140,26 @@ export const getDoctorsByHospital = async (hospitalId: string) => {
     await connect();
     
 
-    const objectId = new mongoose.Types.ObjectId(hospitalId); // Convert to ObjectId
+     // Convert to ObjectId
 
-    const doctors = await doctorModal.find({ hospitalId: objectId }).lean(); // Find all doctors for this hospital
+    const doctors = await doctorModal.find({ hospitalId: hospitalId }).lean(); // Find all doctors for this hospital
     if (!doctors.length) throw new Error("No doctors found for this hospital");
 
     return JSON.parse(JSON.stringify(doctors));
   } catch (error) {
     console.error("Error fetching doctors:", error);
     return [];
+  }
+};
+
+
+export const getAllHospitals = async () => {
+  try {
+    await connect(); // Connect to MongoDB
+    const hospitals = await hospitalmodal.find({}); // Fetch all hospitals from MongoDB
+    return hospitals;
+  } catch (error: any) {
+    throw new Error("Failed to fetch hospitals from database");
   }
 };
 

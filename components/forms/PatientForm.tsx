@@ -10,7 +10,7 @@ import SubmitButton from "../SubmitButton"
 import { useState } from "react"
 import { UserFormValidation } from "@/lib/Validation"
 import { useRouter } from "next/navigation"
-import { createUser } from "@/lib/actions/patient.actions"
+import { createUser, getRegisteredPatient } from "@/lib/actions/patient.actions"
 import { toast } from "@/hooks/use-toast"
 
 export enum FormFieldTypes {
@@ -48,6 +48,7 @@ const PatientForm = () => {
         phone: values.phone,
       };
 
+      // Create new user
       const newUser = await createUser(user);
 
       if (!newUser) {
@@ -59,8 +60,17 @@ const PatientForm = () => {
         return;
       }
 
-      // Redirect using MongoDB _id instead of Appwrite $id
-      router.push(`/patients/${newUser._id}/register`);
+      const registeredPatient = await getRegisteredPatient(newUser._id);
+
+      if (registeredPatient) {
+        toast({
+          title: "Welcome Back!",
+          description: "Redirecting to your appointment page...",
+        });
+        router.push(`/patients/${newUser._id}/new-appointment`);
+      } else {
+        router.push(`/patients/${newUser._id}/register`);
+      }
     } catch (error) {
       console.log(error);
       toast({
@@ -71,38 +81,38 @@ const PatientForm = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 flex-1">
         <section className="mb-12 space-y-4">
           <h1 className="text-xl font-bold">Hi There 👋</h1>
-          <p className="text-dark-700">Schedule Your First Appointment With Us</p>
+          <p className="text-dark-700">Sign In With Your Credentials</p>
         </section>
-        <CustomFormField 
-        fieldType={FormFieldTypes.INPUT}
-        control={form.control}
-        name='name'
-        label="Full Name"
-        placeholder="Enter Your Full Name"
-        iconSrc='assets/icons/user.svg'
-        iconAlt='user'
+        <CustomFormField
+          fieldType={FormFieldTypes.INPUT}
+          control={form.control}
+          name='name'
+          label="Full Name"
+          placeholder="Enter Your Full Name"
+          iconSrc='assets/icons/user.svg'
+          iconAlt='user'
         />
-        <CustomFormField 
-        fieldType={FormFieldTypes.INPUT}
-        control={form.control}
-        name='email'
-        label="Email"
-        placeholder="example@gmail.com"
-        iconSrc='assets/icons/email.svg'
-        iconAlt='email'
+        <CustomFormField
+          fieldType={FormFieldTypes.INPUT}
+          control={form.control}
+          name='email'
+          label="Email"
+          placeholder="example@gmail.com"
+          iconSrc='assets/icons/email.svg'
+          iconAlt='email'
         />
-        <CustomFormField 
-        fieldType={FormFieldTypes.PHONE_INPUT}
-        control={form.control}
-        name='phone'
-        label="Phone Number"
-        placeholder="Enter Your Phone Number"
+        <CustomFormField
+          fieldType={FormFieldTypes.PHONE_INPUT}
+          control={form.control}
+          name='phone'
+          label="Phone Number"
+          placeholder="Enter Your Phone Number"
         />
         <SubmitButton isLoading={isLoading}>
           Get Started

@@ -9,7 +9,7 @@ const DoctorSchema = new mongoose.Schema(
       phone: { type: String, required: true },
       email: { type: String, unique: true, sparse: true }, // ✅ sparse allows multiple nulls
     },
-    hospitalId: { type: mongoose.Schema.Types.ObjectId, ref: "Hospital", required: true },
+    hospitalId: { type: String, required: true },
     ratings: {
       average: { type: Number, default: 0 },
       reviews: { type: Number, default: 0 },
