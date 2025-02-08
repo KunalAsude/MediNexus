@@ -55,58 +55,48 @@ export default function Home() {
             </header>
 
             {/* Main Content */}
-            <main className="h-[calc(100vh-60px)] overflow-hidden p-4 flex flex-col">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <main className="h-[calc(100vh-60px)] p-4 flex flex-col">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                     {/* Quick Access Cards */}
-                    <Link href="/patients" className="group" onClick={(e) => handleLinkClick1('Register Patient Portal')}>
-                        <Card className="h-32 bg-teal-900/20 border-teal-400/10 hover:bg-teal-900/30 transition-all hover:scale-[1.02]">
+                    <Link href="/patients" className="group" onClick={(e) => handleLinkClick1("Register Patient Portal")}>
+                        <Card className="h-40 bg-teal-900/20 border-teal-400/10 hover:bg-teal-900/30 transition-all hover:scale-[1.02]">
                             <CardContent className="flex flex-col items-center justify-center h-full p-4 text-center">
-                                <Users className="h-10 w-10 text-teal-400 mb-2 group-hover:scale-110 transition-transform" />
-                                <h3 className="text-lg font-semibold text-teal-50">Patient Portal</h3>
-                                <p className="text-xs text-teal-300/70">Register Patient and Book Appointments</p>
+                                <Users className="h-12 w-12 text-teal-400 mb-3 group-hover:scale-110 transition-transform" />
+                                <h3 className="text-xl font-semibold text-teal-50 mb-1">Patient Portal</h3>
+                                <p className="text-sm text-teal-300/70">Register Patient and Book Appointments</p>
                             </CardContent>
                         </Card>
                     </Link>
 
-                    {/* Hospital Details Link with Toast */}
-                    <Link href="/hospital" className="group" onClick={(e) => handleLinkClick1('Hospital Details')}>
-                        <Card className="h-32 bg-teal-900/20 border-teal-400/10 hover:bg-teal-900/30 transition-all hover:scale-[1.02]">
+                    <Link href="/hospital" className="group" onClick={(e) => handleLinkClick1("Hospital Details")}>
+                        <Card className="h-40 bg-teal-900/20 border-teal-400/10 hover:bg-teal-900/30 transition-all hover:scale-[1.02]">
                             <CardContent className="flex flex-col items-center justify-center h-full p-4 text-center">
-                                <ClipboardList className="h-10 w-10 text-teal-400 mb-2 group-hover:scale-110 transition-transform" />
-                                <h3 className="text-lg font-semibold text-teal-50">Hospital Details</h3>
-                                <p className="text-xs text-teal-300/70">View hospital information</p>
+                                <ClipboardList className="h-12 w-12 text-teal-400 mb-3 group-hover:scale-110 transition-transform" />
+                                <h3 className="text-xl font-semibold text-teal-50 mb-1">Hospital Details</h3>
+                                <p className="text-sm text-teal-300/70">View hospital information</p>
                             </CardContent>
                         </Card>
                     </Link>
 
-
-                    <div>
-                        {/* Admin Panel Card */}
-                        <div onClick={() => setShowPasskeyModal(true)} className="group cursor-pointer">
-                            <Card className="h-32 bg-teal-900/20 border-teal-400/10 hover:bg-teal-900/30 transition-all hover:scale-[1.02]">
-                                <CardContent className="flex flex-col items-center justify-center h-full p-4 text-center">
-                                    <Activity className="h-10 w-10 text-teal-400 mb-2 group-hover:scale-110 transition-transform" />
-                                    <h3 className="text-lg font-semibold text-teal-50">Doctors Panel</h3>
-                                    <p className="text-xs text-teal-300/70">Manage appointments & records</p>
-                                </CardContent>
-                            </Card>
-                        </div>
-
-                        {/* Render PasskeyModal when clicked */}
-                        {showPasskeyModal && <PasskeyModal open={showPasskeyModal} onClose={() => setShowPasskeyModal(false)} />}
+                    <div onClick={() => setShowPasskeyModal(true)} className="group cursor-pointer">
+                        <Card className="h-40 bg-teal-900/20 border-teal-400/10 hover:bg-teal-900/30 transition-all hover:scale-[1.02]">
+                            <CardContent className="flex flex-col items-center justify-center h-full p-4 text-center">
+                                <Activity className="h-12 w-12 text-teal-400 mb-3 group-hover:scale-110 transition-transform" />
+                                <h3 className="text-xl font-semibold text-teal-50 mb-1">Doctors Panel</h3>
+                                <p className="text-sm text-teal-300/70">Manage appointments & records</p>
+                            </CardContent>
+                        </Card>
                     </div>
 
-                    {/* Medical Store Link with Toast */}
-                    <Link href="#" className="group" onClick={(e) => handleLinkClick(e, 'Medical Store')}>
-                        <Card className="h-32 bg-teal-900/20 border-teal-400/10 hover:bg-teal-900/30 transition-all hover:scale-[1.02]">
+                    <Link href="#" className="group" onClick={(e) => handleLinkClick(e, "Medical Store")}>
+                        <Card className="h-40 bg-teal-900/20 border-teal-400/10 hover:bg-teal-900/30 transition-all hover:scale-[1.02]">
                             <CardContent className="flex flex-col items-center justify-center h-full p-4 text-center">
-                                <Store className="h-10 w-10 text-teal-400 mb-2 group-hover:scale-110 transition-transform" />
-                                <h3 className="text-lg font-semibold text-teal-50">Medical Store</h3>
-                                <p className="text-xs text-teal-300/70">Manage pharmacy inventory</p>
+                                <Store className="h-12 w-12 text-teal-400 mb-3 group-hover:scale-110 transition-transform" />
+                                <h3 className="text-xl font-semibold text-teal-50 mb-1">Medical Store</h3>
+                                <p className="text-sm text-teal-300/70">Manage pharmacy inventory</p>
                             </CardContent>
                         </Card>
                     </Link>
-
                 </div>
 
                 {/* Notifications Section */}
@@ -128,9 +118,6 @@ export default function Home() {
                             </div>
                             <div className="p-4 bg-teal-950/40 rounded-xl text-white text-base border-l-8 border-purple-500 shadow-lg">
                                 <p className="font-semibold">🖥️ New advanced MRI scanning machine installed in the radiology department.</p>
-                            </div>
-                            <div className="p-4 bg-teal-950/40 rounded-xl text-white text-base border-l-8 border-green-500 shadow-lg">
-                                <p className="font-semibold">💉 COVID-19 booster shots now available at the outpatient department.</p>
                             </div>
                         </div>
                     </div>
