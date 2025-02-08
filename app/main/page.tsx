@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useDispatch } from "react-redux";
-import { setSelectedHospital } from "@/redux/slice/hospitalSlice"; 
+import { setSelectedHospital } from "@/redux/slice/hospitalSlice";
 import { useRouter } from "next/navigation";
 import { getAllHospitals } from "@/lib/actions/patient.actions";
 
@@ -24,7 +24,7 @@ export interface Hospital {
     contact: {
         phone: string;
         email: string;
-        website?: string; 
+        website?: string;
     };
     departments: string[];
     facilities: string[];
@@ -32,9 +32,9 @@ export interface Hospital {
         average: number;
         reviews: number;
     };
-    image?: string; 
-    description?: string; 
-    status: "active" | "inactive"; 
+    image?: string;
+    description?: string;
+    status: "active" | "inactive";
 }
 
 const services = [
@@ -91,7 +91,7 @@ export default function Home() {
 
     const filteredHospitals = hospitals.filter(hospital =>
         hospital.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        hospital.location.address.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        hospital.location.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
         hospital.location.city.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
@@ -101,7 +101,7 @@ export default function Home() {
         router.push('/dashboard');
     };
 
-      return (
+    return (
         <div className="h-screen font-sans antialiased">
             {/* Header */}
             <header className="admin-header mb-6 flex justify-between items-center px-6">
@@ -174,18 +174,19 @@ export default function Home() {
                     </CardContent>
                 </Card>
             </section>
-            <div className="max-w-2xl mx-auto mb-8">
+            <div className="max-w-2xl mx-auto mb-8 px-3 sm:px-0">
                 <div className="relative">
                     <input
                         type="text"
                         placeholder="Search by hospital name or location..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full bg-teal-900/20 border-2 border-teal-400/30 text-white px-6 py-4 rounded-lg focus:outline-none focus:border-teal-400 pl-14"
+                        className="w-full bg-teal-900/20 border-2 border-teal-400/30 text-white px-4 sm:px-6 py-3 sm:py-4 rounded-lg focus:outline-none focus:border-teal-400 pl-12 sm:pl-14"
                     />
-                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-6 w-6 text-teal-400" />
+                    <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 sm:h-6 sm:w-6 text-teal-400" />
                 </div>
             </div>
+
 
 
             {/* Hospitals Section */}
@@ -194,7 +195,7 @@ export default function Home() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {filteredHospitals.map((hospital) => (
-                        <Card key={hospital._id.toString()} 
+                        <Card key={hospital._id.toString()}
                             className="bg-teal-900/20 border-teal-400/10 hover:bg-teal-900/30 transition-all hover:scale-[1.02] cursor-pointer"
                             onClick={() => handleHospitalClick(hospital._id.toString())}
                         >
@@ -250,6 +251,11 @@ export default function Home() {
                     ))}
                 </div>
             </section>
+            <footer className="bg-teal-900/20 text-center p-4 mt-auto">
+                <div className="text-whitw">
+                    © MediNexus 2025
+                </div>
+            </footer>
         </div>
     );
 }
