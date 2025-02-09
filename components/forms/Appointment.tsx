@@ -11,7 +11,7 @@ import { useEffect, useState } from "react";
 import { getAppointmentSchema } from "@/lib/Validation";
 import { useRouter } from "next/navigation";
 import { createAppointment, updateAppointment } from "@/lib/actions/appointment.actions";
-import { getDoctorsByHospital } from "@/lib/actions/patient.actions";
+import { getDoctorsByHospital, getUser } from "@/lib/actions/patient.actions";
 import { toast } from "sonner";
 import { Appointment } from "@/types/appwrite.types";
 import { useSelector } from "react-redux";
@@ -27,36 +27,36 @@ export enum FormFieldTypes {
 }
 
 export interface Doctor {
-    _id: string;
-    name: string;
-    specialization: string;
-    image: string;
-  }
-  
-  export interface PrimaryPhysician {
-    id: string;
-    name: string;
-  }
-  
-  export interface AppointmentFormData {
-    primaryPhysician: string;
-    schedule: Date;
-    reason: string;
-    note?: string;
-    cancellationReason?: string;
-  }
-  
-  export interface AppointmentData {
-    userId: string;
-    patientId: string;
-    patientName: string;
-    primaryPhysician: PrimaryPhysician;
-    schedule: Date;
-    reason: string;
-    note?: string;
-    status: 'pending' | 'scheduled' | 'cancelled';
-    cancellationReason?: string;
-  }
+  _id: string;
+  name: string;
+  specialization: string;
+  image: string;
+}
+
+export interface PrimaryPhysician {
+  id: string;
+  name: string;
+}
+
+export interface AppointmentFormData {
+  primaryPhysician: string;
+  schedule: Date;
+  reason: string;
+  note?: string;
+  cancellationReason?: string;
+}
+
+export interface AppointmentData {
+  userId: string;
+  patientId: string;
+  patientName: string;
+  primaryPhysician: PrimaryPhysician;
+  schedule: Date;
+  reason: string;
+  note?: string;
+  status: 'pending' | 'scheduled' | 'cancelled';
+  cancellationReason?: string;
+}
 
 interface AppointmentFormProps {
   userId: string;
@@ -81,11 +81,11 @@ const AppointmentForm = ({
   const hospitalId = useSelector((state: any) => state.hospital.selectedHospitalId);
 
   const AppointmentFormValidation = getAppointmentSchema(type);
-  
+
   const form = useForm<AppointmentFormData>({
     resolver: zodResolver(AppointmentFormValidation),
     defaultValues: {
-      primaryPhysician: appointment?.primaryPhysician ? 
+      primaryPhysician: appointment?.primaryPhysician ?
         JSON.stringify(appointment.primaryPhysician) : "",
       schedule: appointment ? new Date(appointment.schedule) : new Date(),
       reason: appointment?.reason || "",
@@ -110,14 +110,14 @@ const AppointmentForm = ({
 
   const onSubmit = async (values: AppointmentFormData) => {
     setIsLoading(true);
-    
+
     try {
-      const status = type === "schedule" ? "scheduled" : 
-                     type === "cancel" ? "cancelled" : "pending";
+      const status = type === "schedule" ? "scheduled" :
+        type === "cancel" ? "cancelled" : "pending";
 
       if (type === "create") {
         const selectedDoctor = JSON.parse(values.primaryPhysician);
-        
+
         const appointmentData: AppointmentData = {
           userId,
           patientId,
@@ -143,26 +143,56 @@ const AppointmentForm = ({
           userId,
           appointmentId: appointment._id,
           appointment: {
-            primaryPhysician: type !== "cancel" ? 
-              JSON.parse(values.primaryPhysician) : 
+            primaryPhysician: type !== "cancel" ?
+              JSON.parse(values.primaryPhysician) :
               appointment.primaryPhysician,
             reason: values.reason || appointment.reason,
             schedule: values.schedule,
             status,
             note: values.note || appointment.note,
-            ...(type === "cancel" && { 
-              cancellationReason: values.cancellationReason 
+            ...(type === "cancel" && {
+              cancellationReason: values.cancellationReason
             }),
           },
           type,
         };
 
         const updatedAppointment = await updateAppointment(appointmentToUpdate);
+        console.log("Updated Appointment:", updatedAppointment);
         if (updatedAppointment) {
           setOpen?.(false);
           form.reset();
           toast.success(`Appointment ${type}d successfully`);
+          
+          
+          try {
+            const user =await getUser(updatedAppointment?.userId);
+            console.log("User:", user.email);
+            const response = await fetch("/api/email", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                email: user?.email,  // Assuming this is in your updated data
+                name: updatedAppointment?.patientName,
+                appointmentDate: updatedAppointment?.schedule,
+                reason: updatedAppointment?.reason,
+                doctorName: updatedAppointment?.primaryPhysician?.name,
+                type, 
+              }),
+            });
+
+            const data = await response.json();
+            if (data.success) {
+              toast.success("Email sent successfully");
+            } else {
+              toast.error("Failed to send email");
+            }
+          } catch (error) {
+            console.error("Error sending email:", error);
+            toast.error("Error sending email");
+          }
         }
+
       }
     } catch (error) {
       toast.error(`Failed to ${type} appointment`);
@@ -173,8 +203,8 @@ const AppointmentForm = ({
   };
 
   const buttonLabel = type === 'create' ? 'Book Appointment' :
-                     type === 'cancel' ? 'Cancel Appointment' :
-                     'Schedule Appointment';
+    type === 'cancel' ? 'Cancel Appointment' :
+      'Schedule Appointment';
 
   return (
     <Form {...form}>
@@ -196,8 +226,8 @@ const AppointmentForm = ({
               placeholder="Select a physician"
             >
               {doctors.map((doctor) => (
-                <SelectItem 
-                  key={doctor._id} 
+                <SelectItem
+                  key={doctor._id}
                   value={JSON.stringify({ id: doctor._id, name: doctor.name })}
                 >
                   <div className="flex cursor-pointer items-center gap-2">
@@ -247,12 +277,11 @@ const AppointmentForm = ({
           />
         )}
 
-        <SubmitButton 
-          isLoading={isLoading} 
-          className={`${
-            type === 'cancel' ? 'shad-danger-btn' : 
-            'shad-primary-btn bg-[linear-gradient(to_right,#064E4C,#024632,#013220)] border-2 border-cyan-900'
-          } w-full`}
+        <SubmitButton
+          isLoading={isLoading}
+          className={`${type === 'cancel' ? 'shad-danger-btn' :
+              'shad-primary-btn bg-[linear-gradient(to_right,#064E4C,#024632,#013220)] border-2 border-cyan-900'
+            } w-full`}
         >
           {buttonLabel}
         </SubmitButton>
