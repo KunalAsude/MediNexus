@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { encryptKey } from "@/lib/utils";
-import { Lock, X } from "lucide-react";
+import { Lock, X, Loader2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,6 +29,7 @@ const PasskeyModal = ({ open, onClose }: { open: boolean; onClose: () => void })
   const [passkey, setPasskey] = useState("");
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false); // Add a loading state
   const selectedDoctor = useSelector((state: RootState) => state.doctor.selectedDoctor);
   const router = useRouter();
   const { toast } = useToast();
@@ -36,32 +37,35 @@ const PasskeyModal = ({ open, onClose }: { open: boolean; onClose: () => void })
   const [localDoctor, setLocalDoctor] = useState("");
   const hospitalId = useSelector((state: any) => state.hospital.selectedHospitalId);
 
-
   useEffect(() => {
-    const fetchDoctors = async () => {
-      try {
-        console.log('hospitalId:', hospitalId);
-        const doctorsData = await getDoctorsByHospital(hospitalId);
-        console.log(doctorsData);
+    if (open) {
+      fetchDoctors(); // Only fetch when modal is open
+    }
+  }, [open]);
 
+  const fetchDoctors = async () => {
+    setIsLoading(true); // Start loading
+    try {
+      console.log("Fetching doctors for hospitalId:", hospitalId);
+      const doctorsData = await getDoctorsByHospital(hospitalId);
+      console.log(doctorsData);
 
-        const formattedDoctors = doctorsData.map((doc: any) => ({
-          id: doc._id,
-          name: doc.name,
-        }));
-        setDoctors(formattedDoctors);
-      } catch (error) {
-        console.error("Error fetching doctors:", error);
-      }
-    };
-
-    fetchDoctors();
-  }, []);
+      const formattedDoctors = doctorsData.map((doc: any) => ({
+        id: doc._id,
+        name: doc.name,
+      }));
+      setDoctors(formattedDoctors);
+    } catch (error) {
+      console.error("Error fetching doctors:", error);
+    } finally {
+      setIsLoading(false); // Stop loading
+    }
+  };
 
   const closeModal = () => {
     setPasskey(""); // Reset passkey field
     setLocalDoctor(""); // Reset doctor selection in UI
-    setError(""); 
+    setError("");
     onClose();
   };
 
@@ -99,8 +103,8 @@ const PasskeyModal = ({ open, onClose }: { open: boolean; onClose: () => void })
 
   const handleDoctorChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedDocId = e.target.value;
-    setLocalDoctor(selectedDocId); 
-    dispatch(setSelectedDoctor(selectedDocId)); 
+    setLocalDoctor(selectedDocId);
+    dispatch(setSelectedDoctor(selectedDocId));
   };
 
   return (
@@ -123,29 +127,35 @@ const PasskeyModal = ({ open, onClose }: { open: boolean; onClose: () => void })
         <div className="space-y-6">
           {/* Select Doctor Dropdown */}
           <div>
-            <select
-              value={localDoctor}
-              onChange={handleDoctorChange}
-              className="w-full px-4 py-3 bg-teal-950 text-white border border-teal-800/50 rounded-md 
+            {isLoading ? (
+              <div className="flex justify-center items-center">
+                <Loader2 className="w-6 h-6 animate-spin text-teal-400" />
+              </div>
+            ) : (
+              <select
+                value={localDoctor}
+                onChange={handleDoctorChange}
+                className="w-full px-4 py-3 bg-teal-950 text-white border border-teal-800/50 rounded-md 
                           focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/30 
                           appearance-none transition-all"
-            >
-              <option value="">Select a Doctor</option>
-              {doctors.length > 0 ? (
-                doctors.map((doctor) => (
-                  <option key={doctor.id} value={doctor.id}>
-                    {doctor.name}
-                  </option>
-                ))
-              ) : (
-                <option value="" disabled>No doctors available</option>
-              )}
-            </select>
+              >
+                <option value="">Select a Doctor</option>
+                {doctors.length > 0 ? (
+                  doctors.map((doctor) => (
+                    <option key={doctor.id} value={doctor.id}>
+                      {doctor.name}
+                    </option>
+                  ))
+                ) : (
+                  <option value="" disabled>No doctors available</option>
+                )}
+              </select>
+            )}
 
             {error && !selectedDoctor && <p className="text-sm text-red-400 mt-1">{error}</p>}
           </div>
 
-         
+          {/* Passkey Input */}
           <div className="relative">
             <input
               type="password"

@@ -15,6 +15,7 @@ import { getDoctorsByHospital, getUser } from "@/lib/actions/patient.actions";
 import { toast } from "sonner";
 import { Appointment } from "@/types/appwrite.types";
 import { useSelector } from "react-redux";
+import { Loader2 } from "lucide-react";
 
 export enum FormFieldTypes {
   INPUT = "input",
@@ -79,6 +80,7 @@ const AppointmentForm = ({
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const router = useRouter();
   const hospitalId = useSelector((state: any) => state.hospital.selectedHospitalId);
+  const [isSmallLoading, setIsSmallLoading] = useState(false);
 
   const AppointmentFormValidation = getAppointmentSchema(type);
 
@@ -95,13 +97,18 @@ const AppointmentForm = ({
   });
 
   useEffect(() => {
+    if (!hospitalId) return;
+
     const fetchDoctors = async () => {
+      setIsSmallLoading(true);
       try {
         const fetchedDoctors = await getDoctorsByHospital(hospitalId);
         setDoctors(fetchedDoctors);
       } catch (error) {
-        toast.error("Failed to fetch doctors");
+        toast.error("Failed to fetch doctors. Please try again later.");
         console.error("Error fetching doctors:", error);
+      } finally {
+        setIsSmallLoading(false);
       }
     };
 
@@ -163,10 +170,10 @@ const AppointmentForm = ({
           setOpen?.(false);
           form.reset();
           toast.success(`Appointment ${type}d successfully`);
-          
-          
+
+
           try {
-            const user =await getUser(updatedAppointment?.userId);
+            const user = await getUser(updatedAppointment?.userId);
             console.log("User:", user.email);
             const response = await fetch("/api/email", {
               method: "POST",
@@ -177,7 +184,7 @@ const AppointmentForm = ({
                 appointmentDate: updatedAppointment?.schedule,
                 reason: updatedAppointment?.reason,
                 doctorName: updatedAppointment?.primaryPhysician?.name,
-                type, 
+                type,
               }),
             });
 
@@ -225,16 +232,22 @@ const AppointmentForm = ({
               label="Doctor"
               placeholder="Select a physician"
             >
-              {doctors.map((doctor) => (
-                <SelectItem
-                  key={doctor._id}
-                  value={JSON.stringify({ id: doctor._id, name: doctor.name })}
-                >
-                  <div className="flex cursor-pointer items-center gap-2">
-                    <p>{doctor.name}</p>
-                  </div>
-                </SelectItem>
-              ))}
+              {isSmallLoading ? (
+                <div className="flex justify-center py-2">
+                  <Loader2 className="w-6 h-6 animate-spin text-teal-400" />
+                </div>
+              ) : (
+                doctors.map((doctor) => (
+                  <SelectItem
+                    key={doctor._id}
+                    value={JSON.stringify({ id: doctor._id, name: doctor.name })}
+                  >
+                    <div className="flex cursor-pointer items-center gap-2">
+                      <p>{doctor.name}</p>
+                    </div>
+                  </SelectItem>
+                ))
+              )}
             </CustomFormField>
 
             <CustomFormField
@@ -280,7 +293,7 @@ const AppointmentForm = ({
         <SubmitButton
           isLoading={isLoading}
           className={`${type === 'cancel' ? 'shad-danger-btn' :
-              'shad-primary-btn bg-[linear-gradient(to_right,#064E4C,#024632,#013220)] border-2 border-cyan-900'
+            'shad-primary-btn bg-[linear-gradient(to_right,#064E4C,#024632,#013220)] border-2 border-cyan-900'
             } w-full`}
         >
           {buttonLabel}

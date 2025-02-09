@@ -18,17 +18,32 @@ const Admin = () => {
 
  
   useEffect(() => {
-
+    let doctor = selectedDoctor;
+    
+    if (!doctor) {
+      const storedDoctor = localStorage.getItem("selectedDoctor");
+      if (storedDoctor) {
+        doctor = JSON.parse(storedDoctor);
+      }
+    }
+  
+    if (!doctor) return;
+  
     const fetchAppointments = async () => {
       setLoading(true);
-      
-      const data = await getRecentAppointmentList(selectedDoctor);  
-      setAppointments(data);
-      setLoading(false);
+      try {
+        const data = await getRecentAppointmentList(doctor);
+        setAppointments(data);
+      } catch (error) {
+        console.error("Error fetching appointments:", error);
+      } finally {
+        setLoading(false);
+      }
     };
-
+  
     fetchAppointments();
-  }, []);
+  }, [selectedDoctor]);
+  
 
   if (loading) {
     return <Loader />;
