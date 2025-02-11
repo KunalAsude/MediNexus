@@ -34,3 +34,29 @@ export interface Appointment extends Models.Document {
   userId: string;
   cancellationReason: string | null;
 }
+export interface Doctor {
+  _id: string;
+  name: string;
+  status: 'active' | 'inactive';
+  availableSlots: string[];
+}
+
+export interface Appointment {
+  _id: string;
+  patientName: string;
+  date: string;
+  time: string;
+  status: 'scheduled' | 'pending' | 'cancelled';
+}
+
+export interface AppointmentStats {
+  documents: Appointment[];
+  scheduledCount: number;
+  pendingCount: number;
+  cancelledCount: number;
+}
+
+export interface UpdateAvailabilityResponse {
+  success: boolean;
+  message: string;
+}

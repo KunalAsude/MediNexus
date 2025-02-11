@@ -156,7 +156,7 @@ export const getDoctorsByHospital = async (hospitalId: string) => {
 export const getAllHospitals = async () => {
   try {
     await connect(); // Connect to MongoDB
-    const hospitals = await hospitalmodal.find({}); // Fetch all hospitals from MongoDB
+    const hospitals = await hospitalmodal.find({}); 
     return hospitals;
   } catch (error: any) {
     throw new Error("Failed to fetch hospitals from database");
@@ -165,3 +165,25 @@ export const getAllHospitals = async () => {
 
 
 
+export const updateDoctorAvailability = async (doctorId: string, isActive: boolean, availableSlots: string[]) => {
+  try {
+    await connect();
+
+    const updatedDoctor = await doctorModal.findByIdAndUpdate(
+      doctorId,
+      { 
+        status: isActive ? "active" : "inactive", 
+        availableSlots: availableSlots // Ensure this is an array
+      },
+      { new: true, runValidators: true }
+    );
+    
+
+    if (!updatedDoctor) throw new Error("Doctor not found");
+
+    return { success: true, doctor: JSON.parse(JSON.stringify(updatedDoctor)) };
+  } catch (error) {
+    console.error("Error updating doctor availability:", error);
+    return { success: false, message: error.message };
+  }
+};

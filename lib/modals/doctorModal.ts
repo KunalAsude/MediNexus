@@ -7,7 +7,7 @@ const DoctorSchema = new mongoose.Schema(
     experience: { type: Number, required: true },
     contact: {
       phone: { type: String, required: true },
-      email: { type: String, unique: true, sparse: true }, // ✅ sparse allows multiple nulls
+      email: { type: String, unique: true, sparse: true },
     },
     hospitalId: { type: String, required: true },
     ratings: {
@@ -15,8 +15,11 @@ const DoctorSchema = new mongoose.Schema(
       reviews: { type: Number, default: 0 },
     },
     status: { type: String, enum: ["active", "inactive"], default: "active" },
+
+    availableSlots: [{ type: String }], 
+    image: { type: String, default: "" }, 
   },
-  { collection: "doctors" }
+  { collection: "doctors", timestamps: true }
 );
 
 export default mongoose.models.Doctor || mongoose.model("Doctor", DoctorSchema);
