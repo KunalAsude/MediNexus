@@ -13,14 +13,34 @@ import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { toast } from "sonner"
 import { updateDoctorAvailability } from "@/lib/actions/patient.actions"
-import { Calendar, Clock, Power, X } from "lucide-react"
+import { Calendar, Clock, Power } from "lucide-react"
 import type { AppointmentStats, Doctor } from "@/types/appwrite.types"
 import { Card } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
 import { setSelectedDoctor } from "@/redux/slice/doctorSlice"
+import { Checkbox } from "@/components/ui/checkbox"
 
-const timeSlotOptions = ["11:30 AM - 1:30 PM", "2:00 PM - 4:00 PM", "5:00 PM - 7:00 PM"] as const
+// Generate predefined time slots for the current day (11:00 AM to 7:00 PM in 2-hour intervals)
+const generateTimeSlots = () => {
+  const slots = []
+  const startTime = new Date()
+  startTime.setHours(11, 0, 0, 0) // Set to 11:00 AM
+  const endTime = new Date()
+  endTime.setHours(19, 0, 0, 0) // Set to 7:00 PM
+
+  while (startTime < endTime) {
+    const slotStart = new Date(startTime)
+    const slotEnd = new Date(startTime.setHours(startTime.getHours() + 2)) // Add 2 hours
+    slots.push({
+      startTime: slotStart.toISOString(),
+      endTime: slotEnd.toISOString(),
+      label: `${slotStart.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} - ${slotEnd.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`,
+    })
+  }
+  return slots
+}
+
+const timeSlots = generateTimeSlots()
 
 const Admin = () => {
   const [appointments, setAppointments] = useState<AppointmentStats | null>(null)
@@ -28,7 +48,8 @@ const Admin = () => {
   const selectedDoctor = useSelector((state: RootState) => state.doctor.selectedDoctor)
   const [isActive, setIsActive] = useState(false)
   const [selectedSlots, setSelectedSlots] = useState<string[]>([])
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false) // Added state for unsaved changes
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [selectAll, setSelectAll] = useState(false)
   const dispatch = useDispatch()
 
   useEffect(() => {
@@ -47,12 +68,12 @@ const Admin = () => {
     const doctor = initializeDoctor()
     if (!doctor) return
 
-    // Load saved preferences from localStorage
     const savedStatus = localStorage.getItem("doctorStatus")
     const savedSlots = localStorage.getItem("selectedTimeSlots")
 
     setIsActive(savedStatus ? savedStatus === "active" : doctor.status === "active")
     setSelectedSlots(savedSlots ? JSON.parse(savedSlots) : doctor.availableSlots || [])
+    setSelectAll(savedSlots ? JSON.parse(savedSlots).length === timeSlots.length : false)
 
     const fetchAppointments = async () => {
       try {
@@ -72,42 +93,63 @@ const Admin = () => {
   const handleStatusToggle = async () => {
     const newStatus = !isActive
     setIsActive(newStatus)
-    setHasUnsavedChanges(true) // Set unsaved changes to true
+    setHasUnsavedChanges(true)
     localStorage.setItem("doctorStatus", newStatus ? "active" : "inactive")
   }
 
-  const toggleTimeSlot = (slot: string) => {
-    setSelectedSlots((prev) => {
-      const updatedSlots = prev.includes(slot) ? prev.filter((s) => s !== slot) : [...prev, slot]
+  const handleSlotChange = (slot: string) => {
+    const updatedSlots = selectedSlots.includes(slot)
+      ? selectedSlots.filter((s) => s !== slot) // Deselect slot
+      : [...selectedSlots, slot] // Select slot
+    setSelectedSlots(updatedSlots)
+    setSelectAll(updatedSlots.length === timeSlots.length)
+    setHasUnsavedChanges(true)
+    localStorage.setItem("selectedTimeSlots", JSON.stringify(updatedSlots))
+  }
 
-      localStorage.setItem("selectedTimeSlots", JSON.stringify(updatedSlots))
-      setHasUnsavedChanges(true) // Set unsaved changes to true
-      return updatedSlots
-    })
+  const handleSelectAllChange = (checked: boolean) => {
+    setSelectAll(checked)
+    const newSlots = checked ? timeSlots.map((slot) => slot.startTime) : []
+    setSelectedSlots(newSlots)
+    setHasUnsavedChanges(true)
+    localStorage.setItem("selectedTimeSlots", JSON.stringify(newSlots))
   }
 
   const handleSaveAvailability = async () => {
     if (!selectedDoctor) {
-      toast.error("No doctor selected")
-      return
+      toast.error("No doctor selected");
+      return;
     }
-
+  
     try {
-      const response = await updateDoctorAvailability(selectedDoctor, isActive, selectedSlots)
+      const formattedSlots = selectedSlots.map((slot) => {
+        const startTime = new Date(slot);
+        const endTime = new Date(startTime.getTime() + 2 * 60 * 60 * 1000);
+  
+        if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+          throw new Error("Invalid date format");
+        }
+  
+        return { startTime, endTime };
+      });
+  
+      const response = await updateDoctorAvailability(selectedDoctor, isActive, formattedSlots);
+  
       if (response.success) {
-        toast.success("Availability updated successfully")
-
-        localStorage.setItem("doctorStatus", isActive ? "active" : "inactive")
-        localStorage.setItem("selectedTimeSlots", JSON.stringify(selectedSlots))
-        setHasUnsavedChanges(false) // Set unsaved changes to false after successful update
+        toast.success("Availability updated successfully");
+        localStorage.setItem("doctorStatus", isActive ? "active" : "inactive");
+        localStorage.setItem("selectedTimeSlots", JSON.stringify(selectedSlots));
+        setHasUnsavedChanges(false);
       } else {
-        toast.error("Failed to update availability")
+        toast.error("Failed to update availability");
       }
-    } catch (error) {
-      console.error("Error updating availability:", error)
-      toast.error("Something went wrong")
+    } catch {
+      toast.error("Something went wrong");
     }
-  }
+  };
+  
+  
+  
 
   if (loading) {
     return <Loader />
@@ -139,9 +181,8 @@ const Admin = () => {
           </Link>
           <div className="flex items-center space-x-4">
             <div
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg cursor-pointer transition-colors duration-300 ${
-                isActive ? "bg-green-700" : "bg-red-700"
-              }`}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg cursor-pointer transition-colors duration-300 ${isActive ? "bg-green-700" : "bg-red-700"
+                }`}
               onClick={handleStatusToggle}
             >
               <Power className={`h-4 w-4 ${isActive ? "text-green-200" : "text-red-200"}`} />
@@ -162,6 +203,7 @@ const Admin = () => {
                 <Calendar className="h-5 w-5 text-teal-600" />
                 <h3 className="text-lg font-semibold">Availability Settings</h3>
               </div>
+
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 <Card className="p-4 border-0 bg-appointments">
@@ -190,20 +232,37 @@ const Admin = () => {
                       <Clock className="h-4 w-4 text-teal-600" />
                       <Label className="text-base font-medium">Time Slots</Label>
                     </div>
-                    <div className="flex flex-wrap gap-2 justify-center align-middle">
-                      {timeSlotOptions.map((slot) => (
-                        <Badge
-                          key={slot}
-                          variant={selectedSlots.includes(slot) ? "default" : "outline"}
-                          className={`cursor-pointer p-2 bg-teal-600 hover:bg-teal-800 border-0 ${
-                            selectedSlots.includes(slot) ? "bg-teal-800 hover:bg-teal-700" : "bg-transparent"
-                          }`}
-                          onClick={() => toggleTimeSlot(slot)}
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="select-all"
+                          checked={selectAll}
+                          onCheckedChange={handleSelectAllChange}
+                          className="border-teal-700"
+                        />
+                        <label
+                          htmlFor="select-all"
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                         >
-                          {slot}
-                          {selectedSlots.includes(slot) && <X className="ml-1 h-3 w-3" />}
-                        </Badge>
-                      ))}
+                          {selectAll ? "All Selected" : "Select All"}
+                        </label>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {timeSlots.map((slot) => (
+                          <div
+                            key={slot.startTime}
+                            className="flex items-center space-x-2 p-2 border-0 rounded-lg cursor-pointer hover:bg-teal-700  transition-colors"
+                            onClick={() => handleSlotChange(slot.startTime)}
+                          >
+                            <Checkbox
+                              checked={selectedSlots.includes(slot.startTime)}
+                              onCheckedChange={() => handleSlotChange(slot.startTime)}
+                              className="border-teal-700 "
+                            />
+                            <Label>{slot.label}</Label>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </Card>
@@ -214,7 +273,7 @@ const Admin = () => {
                     <Button
                       className="w-full bg-teal-700 hover:bg-teal-700 text-white mt-2"
                       onClick={handleSaveAvailability}
-                      disabled={!hasUnsavedChanges} // Added disabled prop
+                      disabled={!hasUnsavedChanges}
                     >
                       Update Availability
                     </Button>
@@ -261,4 +320,3 @@ const Admin = () => {
 }
 
 export default Admin
-

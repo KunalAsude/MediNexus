@@ -163,27 +163,57 @@ export const getAllHospitals = async () => {
   }
 };
 
-
-
-export const updateDoctorAvailability = async (doctorId: string, isActive: boolean, availableSlots: string[]) => {
+ // Import the Doctor model
+ export const updateDoctorAvailability = async (
+  doctorId: string,
+  isActive: boolean,
+  availableSlots: { startTime: Date; endTime: Date }[]
+): Promise<{ success: boolean; doctor?: any; message?: string }> => {
   try {
+    if (!doctorId || !Array.isArray(availableSlots) || availableSlots.length === 0) {
+      throw new Error("Invalid input: doctorId and availableSlots are required.");
+    }
+
+    const formattedSlots = availableSlots.map(slot => {
+      const startTime = new Date(slot.startTime);
+      const endTime = new Date(slot.endTime);
+
+      if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+        throw new Error("Invalid date format in availableSlots.");
+      }
+
+      return {
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
+      };
+    });
+
     await connect();
 
     const updatedDoctor = await doctorModal.findByIdAndUpdate(
-      doctorId,
-      { 
-        status: isActive ? "active" : "inactive", 
-        availableSlots: availableSlots // Ensure this is an array
+      new mongoose.Types.ObjectId(doctorId),
+      {
+        status: isActive ? "active" : "inactive",
+        availableSlots: formattedSlots.map(slot => ({
+          startTime: new Date(slot.startTime),
+          endTime: new Date(slot.endTime),
+        })),
       },
-      { new: true, runValidators: true }
+      { new: true }
     );
-    
 
-    if (!updatedDoctor) throw new Error("Doctor not found");
+    if (!updatedDoctor) {
+      throw new Error("Doctor not found.");
+    }
 
     return { success: true, doctor: JSON.parse(JSON.stringify(updatedDoctor)) };
   } catch (error) {
-    console.error("Error updating doctor availability:", error);
-    return { success: false, message: error.message };
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "An unknown error occurred",
+    };
   }
 };
+
+
+
