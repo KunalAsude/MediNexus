@@ -2,24 +2,26 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import PasskeyModal from "@/components/ui/PasskeyModal";
-import { Hospital, Users, Stethoscope, Store, Activity, Bell, ClipboardList } from "lucide-react";
+import { Hospital, Users, Stethoscope, Store, Activity, Bell, ClipboardList, UserPlus, Clock, Bed, Ambulance, PieChart } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { useToast } from '@/hooks/use-toast'; // Import useToast
+import { useToast } from '@/hooks/use-toast';
+import { StatCard } from "@/components/ui/Stat";
+import { LineChart } from "@/components/ui/LineChart";
+import { BarChart } from "@/components/ui/BarChart";
+
 
 export default function Home() {
     const [showPasskeyModal, setShowPasskeyModal] = useState(false);
-    const { toast } = useToast(); // Initialize the toast function
+    const { toast } = useToast();
 
-    // Handle link click to show toast
     const handleLinkClick = (e: React.MouseEvent, featureName: string) => {
-        e.preventDefault(); // Prevent immediate navigation
-
+        e.preventDefault();
         toast({
             title: `${featureName} Under Maintenance`,
             description: `${featureName} is currently being built. Please check back later.`,
-            variant: 'destructive', // Error style for toast
-            duration: 2000, // Auto-hide after 3 seconds
+            variant: 'destructive',
+            duration: 2000,
         });
     };
 
@@ -28,12 +30,51 @@ export default function Home() {
             title: `Processing Your Request!!`,
             description: `Directing You To ${featureName}`,
             variant: 'default',
-            duration: 2000, // Auto-hide after 3 seconds
+            duration: 2000,
         });
     };
 
+    // Sample data for charts
+    const appointmentTrends = {
+        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        datasets: [{
+            label: 'Weekly Appointments',
+            data: [65, 59, 80, 81, 56, 55, 40],
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            fill: true
+        }]
+    };
+
+    const appointmentStatus = {
+        labels: ['Completed', 'Canceled', 'Scheduled'],
+        datasets: [{
+            data: [300, 50, 100],
+            backgroundColor: [
+                'rgba(75, 192, 192, 0.6)',
+                'rgba(255, 99, 132, 0.6)',
+                'rgba(255, 206, 86, 0.6)'
+            ],
+            borderColor: [
+                'rgba(75, 192, 192, 1)',
+                'rgba(255, 99, 132, 1)',
+                'rgba(255, 206, 86, 1)'
+            ],
+            borderWidth: 1
+        }]
+    };
+
+    const departmentData = {
+        labels: ['Cardiology', 'Orthopedics', 'Pediatrics', 'Neurology', 'Dermatology'],
+        datasets: [{
+            label: 'Appointments by Department',
+            data: [120, 90, 85, 70, 65],
+            backgroundColor: 'rgba(75, 192, 192, 0.6)'
+        }]
+    };
+
     return (
-        <div className="h-screen overflow-hidden font-sans antialiased">
+        <div className="h-screen overflow-hidden font-sans antialiased remove-scrollbar">
             {/* Header */}
             <header className='admin-header mb-3'>
                 <Link href='/' className='cursor-pointer'>
@@ -51,13 +92,12 @@ export default function Home() {
                 <p className="text-sm sm:text-lg font-bold flex items-center justify-center text-teal-400">
                     Hospital Dashboard
                 </p>
-
             </header>
 
             {/* Main Content */}
-            <main className="h-[calc(100vh-60px)] overflow-hidden p-4 flex flex-col">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {/* Quick Access Cards */}
+            <main className="h-[calc(100vh-60px)] overflow-auto p-4 remove-scrollbar">
+                {/* Quick Access Cards */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                     <Link href="/patients" className="group" onClick={(e) => handleLinkClick1('Register Patient Portal')}>
                         <Card className="h-40 bg-teal-900/20 border-teal-400/10 hover:bg-teal-900/30 transition-all hover:scale-[1.02]">
                             <CardContent className="flex flex-col items-center justify-center h-full p-4 text-center">
@@ -68,7 +108,6 @@ export default function Home() {
                         </Card>
                     </Link>
 
-                    {/* Hospital Details Link with Toast */}
                     <Link href="/hospital" className="group" onClick={(e) => handleLinkClick1('Hospital Details')}>
                         <Card className="h-40 bg-teal-900/20 border-teal-400/10 hover:bg-teal-900/30 transition-all hover:scale-[1.02]">
                             <CardContent className="flex flex-col items-center justify-center h-full p-4 text-center">
@@ -79,24 +118,16 @@ export default function Home() {
                         </Card>
                     </Link>
 
-
-                    <div>
-                        {/* Admin Panel Card */}
-                        <div onClick={() => setShowPasskeyModal(true)} className="group cursor-pointer">
-                            <Card className="h-40 bg-teal-900/20 border-teal-400/10 hover:bg-teal-900/30 transition-all hover:scale-[1.02]">
-                                <CardContent className="flex flex-col items-center justify-center h-full p-4 text-center">
-                                    <Activity className="h-10 w-10 text-teal-400 mb-2 group-hover:scale-110 transition-transform" />
-                                    <h3 className="text-lg font-semibold text-teal-50">Doctors Panel</h3>
-                                    <p className="text-xs text-teal-300/70">Manage appointments & records</p>
-                                </CardContent>
-                            </Card>
-                        </div>
-
-                        {/* Render PasskeyModal when clicked */}
-                        {showPasskeyModal && <PasskeyModal open={showPasskeyModal} onClose={() => setShowPasskeyModal(false)} />}
+                    <div onClick={() => setShowPasskeyModal(true)} className="group cursor-pointer">
+                        <Card className="h-40 bg-teal-900/20 border-teal-400/10 hover:bg-teal-900/30 transition-all hover:scale-[1.02]">
+                            <CardContent className="flex flex-col items-center justify-center h-full p-4 text-center">
+                                <Activity className="h-10 w-10 text-teal-400 mb-2 group-hover:scale-110 transition-transform" />
+                                <h3 className="text-lg font-semibold text-teal-50">Doctors Panel</h3>
+                                <p className="text-xs text-teal-300/70">Manage appointments & records</p>
+                            </CardContent>
+                        </Card>
                     </div>
 
-                    {/* Medical Store Link with Toast */}
                     <Link href="#" className="group" onClick={(e) => handleLinkClick(e, 'Medical Store')}>
                         <Card className="h-40 bg-teal-900/20 border-teal-400/10 hover:bg-teal-900/30 transition-all hover:scale-[1.02]">
                             <CardContent className="flex flex-col items-center justify-center h-full p-4 text-center">
@@ -106,36 +137,51 @@ export default function Home() {
                             </CardContent>
                         </Card>
                     </Link>
-
                 </div>
 
-                {/* Notifications Section */}
-                <div className="mt-6 flex flex-col flex-1 overflow-hidden mb-5 mr-1">
-                    <h2 className="text-2xl font-bold text-teal-300 mb-4">Latest Updates</h2>
-                    <div className="flex-1 overflow-y-auto remove-scrollbar ">
-                        <div className="space-y-4">
-                            <div className="p-4 bg-teal-950/20 rounded-xl text-white text-base border-l-8 border-teal-500 shadow-lg">
-                                <p className="font-semibold">🩺 New appointment slots available for Dr. Johnson and Dr. Patel.</p>
-                            </div>
-                            <div className="p-4 bg-teal-950/40 rounded-xl text-white text-base border-l-8 border-red-500 shadow-lg">
-                                <p className="font-semibold">🏥 ICU capacity has been increased to accommodate more critical patients.</p>
-                            </div>
-                            <div className="p-4 bg-teal-950/40 rounded-xl text-white text-base border-l-8 border-blue-500 shadow-lg">
-                                <p className="font-semibold">💊 The pharmacy has restocked essential medicines, including emergency supplies.</p>
-                            </div>
-                            <div className="p-4 bg-teal-950/40 rounded-xl text-white text-base border-l-8 border-yellow-500 shadow-lg">
-                                <p className="font-semibold">🩸 Blood donation camp scheduled for this Saturday in the hospital lobby.</p>
-                            </div>
-                            <div className="p-4 bg-teal-950/40 rounded-xl text-white text-base border-l-8 border-purple-500 shadow-lg">
-                                <p className="font-semibold">🖥️ New advanced MRI scanning machine installed in the radiology department.</p>
-                            </div>
-                            
-                        </div>
+                {/* Statistics Section */}
+                <div className="space-y-6">
+                    {/* Key Metrics */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <StatCard
+                            title="Total Patients"
+                            value="1,234"
+                            icon={<UserPlus size={24} />}
+                            trend={{ value: 12, isPositive: true }}
+                        />
+                        <StatCard
+                            title="Appointments Today"
+                            value="45"
+                            icon={<Clock size={24} />}
+                            trend={{ value: 5, isPositive: true }}
+                        />
+                        <StatCard
+                            title="Bed Occupancy"
+                            value="85%"
+                            icon={<Bed size={24} />}
+                            trend={{ value: 3, isPositive: false }}
+                        />
+                        <StatCard
+                            title="Emergency Cases"
+                            value="8"
+                            icon={<Ambulance size={24} />}
+                            trend={{ value: 2, isPositive: true }}
+                        />
+                    </div>
+
+                    {/* Charts Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-4 remove-scrollbar">
+                        <Card className="bg-teal-900/20 border-teal-400/10 p-4">
+                            <LineChart data={appointmentTrends} title="Weekly Appointment Trends" />
+                        </Card>
+                        <Card className="bg-teal-900/20 border-teal-400/10 p-4">
+                            <BarChart data={departmentData} title="Appointments by Department" />
+                        </Card>
                     </div>
                 </div>
-
-
             </main>
+
+            {showPasskeyModal && <PasskeyModal open={showPasskeyModal} onClose={() => setShowPasskeyModal(false)} />}
         </div>
     );
 }
