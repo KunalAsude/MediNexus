@@ -37,7 +37,6 @@ const SubmitButton = ({ isLoading, className, children }: ButtonProps) => {
     >
       {isLoading ? (
         <div className="flex items-center gap-4">
-          <Loader />
           Loading...
         </div>
       ) : (

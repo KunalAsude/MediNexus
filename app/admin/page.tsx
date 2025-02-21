@@ -164,7 +164,7 @@ const Admin = () => {
   }
 
   return (
-      <div className="w-full max-w-full px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+      <div className="w-full max-w-full px-2 sm:px-6 lg:px-3 py-6 space-y-8">
         <header className="admin-header">
           <Link href="/dashboard" className="cursor-pointer">
             <div className="flex flex-row align-middle">
@@ -199,7 +199,7 @@ const Admin = () => {
           <Card className="shadow-sm border-0">
             <div className="space-y-6">
               <div className="flex items-center space-x-2">
-                <Calendar className="h-5 w-5 text-teal-600" />
+                <Calendar className="h-5 w-5 text-teal-600 ml-2" />
                 <h3 className="text-lg font-semibold">Availability Settings</h3>
               </div>
 
@@ -303,7 +303,7 @@ const Admin = () => {
             />
           </div>
 
-          <Card className="p-6 shadow-sm border-0">
+          <Card className="p-3 lg:p-6 shadow-sm border-0">
             <div className="flex items-center space-x-2 mb-6">
               <Calendar className="h-5 w-5 text-teal-600" />
               <h3 className="text-lg font-semibold">Recent Appointments</h3>
