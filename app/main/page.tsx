@@ -131,10 +131,10 @@ export default function Home() {
             {/* Hero Section */}
             <div className="bg-teal-900/30 py-16 px-4 sm:px-6 lg:px-8 m-3 rounded-lg">
                 <div className="max-w-7xl mx-auto text-center">
-                    <h1 className="text-4xl md:text-5xl font-bold text-teal-400 mb-6">
+                    <h1 className="text-4xl md:text-5xl font-bold text-teal-300 mb-6">
                         Your Health, Our Priority
                     </h1>
-                    <p className="text-xl text-teal-300/70 max-w-3xl mx-auto">
+                    <p className="text-xl text-white max-w-3xl mx-auto">
                         Connecting you with leading hospitals and comprehensive medical services for better healthcare
                     </p>
                 </div>
@@ -174,6 +174,8 @@ export default function Home() {
                     </CardContent>
                 </Card>
             </section>
+
+            
             <div className="max-w-2xl mx-auto mb-8 px-3 sm:px-0">
                 <div className="relative">
                     <input

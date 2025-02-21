@@ -164,8 +164,7 @@ const Admin = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+      <div className="w-full max-w-full px-4 sm:px-6 lg:px-8 py-6 space-y-8">
         <header className="admin-header">
           <Link href="/dashboard" className="cursor-pointer">
             <div className="flex flex-row align-middle">
@@ -315,7 +314,6 @@ const Admin = () => {
           </Card>
         </main>
       </div>
-    </div>
   )
 }
 
