@@ -303,7 +303,7 @@ const Admin = () => {
             />
           </div>
 
-          <Card className="p-3 lg:p-6 shadow-sm border-0">
+          <Card className="p-3 lg:p-3 shadow-sm border-0">
             <div className="flex items-center space-x-2 mb-6">
               <Calendar className="h-5 w-5 text-teal-600" />
               <h3 className="text-lg font-semibold">Recent Appointments</h3>
