@@ -143,10 +143,12 @@ export default function Home() {
           {/* Charts Grid */}
           <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 gap-4 remove-scrollbar">
             <Card className="bg-teal-900/20 border-teal-400/10 p-4 border-0">
+            <h2 className="text-lg text-teal-50 mt-4 ml-5 mb-2">Weekly Appointment Statistics</h2>
               <LineChart data={appointmentTrends} title="Weekly Appointment Trends" />
             </Card>
             <Card className="bg-teal-900/20 border-teal-400/10 p-4 border-0">
-              <BarChart data={departmentData} title="Appointments by Department" />
+            <h2 className="text-lg text-teal-50 mt-4 ml-5 mb-2">Appointments by Department</h2>
+              <BarChart data={departmentData} title="" />
             </Card>
           </div>
         </div>

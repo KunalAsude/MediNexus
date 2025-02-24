@@ -95,7 +95,6 @@ export function BarChart({ data, title }: BarChartProps) {
 
   return (
     <div className="p-4 rounded-lg">
-        <h2 className="text-lg font-semibold text-teal-50 mb-5">{title}</h2>
       <Bar options={options} data={enhancedData} />
     </div>
   );

@@ -113,10 +113,10 @@ const appointmentData = {
 
 
 const reviews = [
-    { name: "John D.", rating: 5, comment: "Excellent care and professional staff. Highly recommended!" },
-    { name: "Sarah M.", rating: 4, comment: "Great experience overall. Quick and efficient service." },
-    { name: "Robert L.", rating: 5, comment: "Top-notch facilities and caring doctors. Thank you MediNexus!" },
-]
+    { name: "Rajesh K.", rating: 5, comment: "Excellent care and professional staff. Highly recommended!" },
+    { name: "Priya S.", rating: 4, comment: "Great experience overall. Quick and efficient service." },
+    { name: "Amit P.", rating: 5, comment: "Top-notch facilities and caring doctors. Thank you MediNexus!" },
+];
 
 export default function Home() {
     const { toast } = useToast()
