@@ -86,7 +86,6 @@ export function LineChart({ data, title }: LineChartProps) {
 
     return (
         <div className="p-4 rounded-lg">
-            <h2 className="text-lg font-semibold text-teal-50 mb-5">{title}</h2>
             <Line options={options} data={enhancedData} />
         </div>
     );
