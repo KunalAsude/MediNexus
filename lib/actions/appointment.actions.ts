@@ -62,9 +62,7 @@ export const createAppointment = async (params: CreateAppointmentParams) => {
       note: params.note || "",
     });
 
-    console.log("Attempting to save appointment:", JSON.stringify(newAppointment, null, 2));
     const savedAppointment = await newAppointment.save();
-    console.log("Appointment saved successfully with ID:", savedAppointment);
 
     // Convert MongoDB document to a plain object and format dates
     return {
@@ -92,15 +90,14 @@ export const getAppointment = async (appointmentId: string) => {
       throw new Error("Appointment ID is required");
     }
     
-    console.log("Fetching appointment with ID:", appointmentId);
+
     const appointment = await Appointment.findById(appointmentId).lean();
     
     if (!appointment) {
       console.error("Appointment not found with ID:", appointmentId);
       throw new Error("Appointment not found");
     }
-    
-    console.log("Appointment found:", appointment?._id);
+
     
     // Format dates in the response
     return {
@@ -123,24 +120,26 @@ export const getRecentAppointmentList = async (doctorId = null) => {
   try {
     await connect();
 
-    // Define query: If doctorId is provided, filter by doctor
-    const query = doctorId ? { "primaryPhysician.id": doctorId } : {};
+    // Define query: If doctorId is provided, filter by primaryPhysician.id
+    const query = doctorId ? { "primaryPhysician.id": String(doctorId) } : {};
 
     const appointments = await Appointment.find(query).sort({ createdAt: -1 }).lean();
-    console.log(`Found ${appointments.length} appointments`);
 
-    // Format dates in each appointment
+    // Format dates in each appointment safely
     const formattedAppointments = appointments.map(appointment => ({
       ...appointment,
       _id: appointment._id.toString(),
-      timeSlot: {
-        startTime: new Date(appointment.timeSlot.startTime).toISOString(),
-        endTime: new Date(appointment.timeSlot.endTime).toISOString(),
-      },
+      timeSlot: appointment.timeSlot
+        ? {
+            startTime: new Date(appointment.timeSlot.startTime).toISOString(),
+            endTime: new Date(appointment.timeSlot.endTime).toISOString(),
+          }
+        : null, // Handle missing timeSlot
       createdAt: new Date(appointment.createdAt).toISOString(),
       updatedAt: new Date(appointment.updatedAt).toISOString(),
     }));
 
+    // Count different statuses
     const counts = formattedAppointments.reduce(
       (acc, appointment) => {
         if (appointment.status === "scheduled") acc.scheduledCount += 1;
@@ -162,6 +161,8 @@ export const getRecentAppointmentList = async (doctorId = null) => {
   }
 };
 
+
+
 export const updateAppointment = async ({
   appointmentId,
   userId,
@@ -171,8 +172,6 @@ export const updateAppointment = async ({
   try {
     await connect();
     if (!appointmentId) throw new Error("Missing appointment ID");
-
-    console.log(`Updating appointment ${appointmentId} with type ${type}`);
 
     const updateFields: Record<string, any> = {};
     
@@ -208,8 +207,6 @@ export const updateAppointment = async ({
       updateFields.status = appointment.status || "scheduled";
     }
 
-    console.log("Update fields:", JSON.stringify(updateFields, null, 2));
-
     // Use updateOne instead of findByIdAndUpdate for more reliable updates
     const result = await Appointment.updateOne(
       { _id: appointmentId },
@@ -219,8 +216,6 @@ export const updateAppointment = async ({
     if (result.matchedCount === 0) {
       throw new Error("Appointment not found");
     }
-
-    console.log("Update result:", result);
 
     // Fetch the updated document
     const updatedAppointment = await Appointment.findById(appointmentId);
@@ -278,8 +273,6 @@ export async function getBookedAppointments(doctorId: string, date: Date) {
     const startOfDayUTC = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 0, 0, 0, 0));
     const endOfDayUTC = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 23, 59, 59, 999));
 
-    console.log("Start UTC:", startOfDayUTC);
-    console.log("End UTC:", endOfDayUTC);
 
     // Query MongoDB
     const bookedAppointments = await Appointment.find({

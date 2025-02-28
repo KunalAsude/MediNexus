@@ -78,6 +78,7 @@ const Admin = () => {
     const fetchAppointments = async () => {
       try {
         const data = await getRecentAppointmentList(doctor)
+        console.log("data",data)
         setAppointments(data)
       } catch (error) {
         console.error("Error fetching appointments:", error)
@@ -122,6 +123,7 @@ const Admin = () => {
     }
   
     try {
+      // Format the time slots correctly for the database
       const formattedSlots = selectedSlots.map((slot) => {
         const startTime = new Date(slot);
         const endTime = new Date(startTime.getTime() + 2 * 60 * 60 * 1000);
@@ -130,7 +132,11 @@ const Admin = () => {
           throw new Error("Invalid date format");
         }
   
-        return { startTime, endTime };
+        // Return ISO string format which is more reliable for database storage
+        return { 
+          startTime: startTime.toISOString(), 
+          endTime: endTime.toISOString() 
+        };
       });
   
       const response = await updateDoctorAvailability(selectedDoctor, isActive, formattedSlots);
@@ -143,13 +149,11 @@ const Admin = () => {
       } else {
         toast.error("Failed to update availability");
       }
-    } catch {
+    } catch (error) {
+      console.error("Error updating availability:", error);
       toast.error("Something went wrong");
     }
   };
-  
-  
-  
 
   if (loading) {
     return <Loader />
