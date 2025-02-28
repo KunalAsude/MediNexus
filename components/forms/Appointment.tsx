@@ -6,16 +6,15 @@ import { Form } from "@/components/ui/form"
 import { SelectItem } from "@/components/ui/select"
 import CustomFormField from "../customFormField"
 import SubmitButton from "../SubmitButton"
-import { useEffect, useState, useCallback, useRef } from "react"
+import { useEffect, useState } from "react"
 import { getAppointmentSchema } from "@/lib/Validation"
 import { useRouter } from "next/navigation"
-import { createAppointment, getBookedAppointments, updateAppointment } from "@/lib/actions/appointment.actions"
+import { createAppointment, updateAppointment } from "@/lib/actions/appointment.actions"
 import { getDoctorsByHospital, getUser } from "@/lib/actions/patient.actions"
 import { toast } from "sonner"
 import type { Appointment } from "@/types/appwrite.types"
 import { useSelector } from "react-redux"
 import { Loader2 } from "lucide-react"
-import { useWatch } from "react-hook-form";
 
 export enum FormFieldTypes {
   INPUT = "input",
@@ -49,10 +48,6 @@ export interface AppointmentFormData {
   reason: string
   note?: string
   cancellationReason?: string
-  timeSlot: {
-    startTime: Date
-    endTime: Date
-  }
 }
 
 export interface AppointmentData {
@@ -60,13 +55,10 @@ export interface AppointmentData {
   patientId: string
   patientName: string
   primaryPhysician: PrimaryPhysician
+  schedule: Date
   reason: string
-  timeSlot: {
-    startTime: Date
-    endTime: Date
-  }
-  status: "pending" | "scheduled" | "cancelled"
   note?: string
+  status: "pending" | "scheduled" | "cancelled"
   cancellationReason?: string
 }
 
@@ -87,36 +79,17 @@ const AppointmentForm = ({ userId, patientId, patientName, type, appointment, se
   const [isSmallLoading, setIsSmallLoading] = useState(false)
   const [hospitalId, setHospitalId] = useState<string | null>(null)
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null)
-  const [bookedAppointments, setBookedAppointments] = useState<any[]>([])
-  
-  // Use a ref to track if we need to fetch appointments
-  const shouldFetchAppointmentsRef = useRef(false);
-  
-  // Use refs to track the current doctor and date without causing re-renders
-  const currentDoctorRef = useRef<{ id: string, name: string } | null>(null);
-  const currentDateRef = useRef<Date | null>(null);
 
   const AppointmentFormValidation = getAppointmentSchema(type)
-
-  // Parse dates safely for the initial form values
-  const safeParseDate = (dateString: string | undefined | null): Date | null => {
-    if (!dateString) return null;
-    const parsedDate = new Date(dateString);
-    return !isNaN(parsedDate.getTime()) ? parsedDate : null;
-  }
 
   const form = useForm<AppointmentFormData>({
     resolver: zodResolver(AppointmentFormValidation),
     defaultValues: {
       primaryPhysician: appointment?.primaryPhysician ? JSON.stringify(appointment.primaryPhysician) : "",
-      schedule: safeParseDate(appointment?.timeSlot?.startTime) || new Date(),
+      schedule: appointment ? new Date(appointment.schedule) : new Date(),
       reason: appointment?.reason || "",
       note: appointment?.note || "",
       cancellationReason: appointment?.cancellationReason || "",
-      timeSlot: {
-        startTime: safeParseDate(appointment?.timeSlot?.startTime) || null,
-        endTime: safeParseDate(appointment?.timeSlot?.endTime) || null,
-      },
     },
   })
 
@@ -144,7 +117,7 @@ const AppointmentForm = ({ userId, patientId, patientName, type, appointment, se
         setDoctors(fetchedDoctors)
       } catch (error) {
         toast.error("Failed to fetch doctors. Please try again later.")
-        
+        console.error("Error fetching doctors:", error)
       } finally {
         setIsSmallLoading(false)
       }
@@ -152,57 +125,6 @@ const AppointmentForm = ({ userId, patientId, patientName, type, appointment, se
 
     fetchDoctors()
   }, [hospitalId])
-
-  // Update form when appointment changes
-  useEffect(() => {
-    if (appointment) {
-      // Parse the dates safely
-      const startTime = safeParseDate(appointment.timeSlot?.startTime);
-      const endTime = safeParseDate(appointment.timeSlot?.endTime);
-
-      // If we have a valid time slot, update the selectedTimeSlot visual indicator
-      if (startTime && endTime) {
-        const timeSlotString = formatTimeSlot(startTime, endTime);
-        setSelectedTimeSlot(timeSlotString);
-      }
-
-      // Reset the form with safely parsed values
-      form.reset({
-        primaryPhysician: appointment.primaryPhysician
-          ? JSON.stringify(appointment.primaryPhysician)
-          : "",
-        schedule: startTime || new Date(),
-        reason: appointment?.reason || "",
-        note: appointment?.note || "",
-        cancellationReason: appointment?.cancellationReason || "",
-        timeSlot: {
-          startTime: startTime,
-          endTime: endTime,
-        },
-      });
-      
-      // Update refs for doctor and date
-      try {
-        if (appointment.primaryPhysician) {
-          currentDoctorRef.current = appointment.primaryPhysician;
-        }
-      } catch (error) {
-        console.error("Error updating doctor ref:", error);
-      }
-      
-      if (startTime) {
-        currentDateRef.current = startTime;
-      }
-    }
-  }, [appointment, form]);
-
-  // Helper function to format time slots consistently
-  const formatTimeSlot = (startTime: Date, endTime: Date) => {
-    return `${startTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} - ${endTime.toLocaleTimeString(
-      [],
-      { hour: "2-digit", minute: "2-digit" }
-    )}`;
-  };
 
   const onSubmit = async (values: AppointmentFormData) => {
     setIsLoading(true)
@@ -213,27 +135,6 @@ const AppointmentForm = ({ userId, patientId, patientName, type, appointment, se
       if (type === "create") {
         const selectedDoctor = JSON.parse(values.primaryPhysician)
 
-        // Ensure timeSlot exists and has proper values
-        let timeSlot = {
-          startTime: null,
-          endTime: null
-        };
-
-        // Safely check if values.timeSlot exists and has valid startTime/endTime properties
-        if (values.timeSlot && values.timeSlot.startTime && values.timeSlot.endTime) {
-          timeSlot = {
-            startTime: values.timeSlot.startTime,
-            endTime: values.timeSlot.endTime
-          };
-        } else {
-          // Create a default time slot based on the schedule value
-          const selectedDate = values.schedule;
-          const startTime = new Date(selectedDate);
-          const endTime = new Date(selectedDate);
-          endTime.setMinutes(endTime.getMinutes() + 30);
-          timeSlot = { startTime, endTime };
-        }
-
         const appointmentData: AppointmentData = {
           userId,
           patientId,
@@ -242,11 +143,12 @@ const AppointmentForm = ({ userId, patientId, patientName, type, appointment, se
             id: selectedDoctor.id,
             name: selectedDoctor.name,
           },
+          schedule: values.schedule,
           reason: values.reason,
-          timeSlot: timeSlot,
-          status,
           note: values.note,
+          status,
         }
+
         const newAppointment = await createAppointment(appointmentData)
         if (newAppointment) {
           form.reset()
@@ -254,19 +156,13 @@ const AppointmentForm = ({ userId, patientId, patientName, type, appointment, se
           toast.success("Appointment created successfully")
         }
       } else if (appointment && (type === "cancel" || type === "schedule")) {
-        // For updating appointments, ensure we're using the selected time slot
-        // Safely check if values.timeSlot exists before using it
-        const timeSlotToUse = values.timeSlot && values.timeSlot.startTime && values.timeSlot.endTime
-          ? values.timeSlot
-          : appointment.timeSlot;
-
         const appointmentToUpdate = {
           userId,
           appointmentId: appointment._id,
           appointment: {
             primaryPhysician: type !== "cancel" ? JSON.parse(values.primaryPhysician) : appointment.primaryPhysician,
             reason: values.reason || appointment.reason,
-            timeSlot: timeSlotToUse,
+            schedule: values.schedule,
             status,
             note: values.note || appointment.note,
             ...(type === "cancel" && {
@@ -304,12 +200,14 @@ const AppointmentForm = ({ userId, patientId, patientName, type, appointment, se
               toast.error("Failed to send email")
             }
           } catch (error) {
+            console.error("Error sending email:", error)
             toast.error("Error sending email")
           }
         }
       }
     } catch (error) {
       toast.error(`Failed to ${type} appointment`)
+      console.error("Error handling appointment:", error)
     } finally {
       setIsLoading(false)
     }
@@ -318,41 +216,26 @@ const AppointmentForm = ({ userId, patientId, patientName, type, appointment, se
   const buttonLabel =
     type === "create" ? "Book Appointment" : type === "cancel" ? "Cancel Appointment" : "Schedule Appointment"
 
-  const handleSlotClick = (slot: { startTime: Date; endTime: Date }, isBooked: boolean) => {
-    // Don't allow selection of booked slots
-    if (isBooked) {
-      toast.error("This time slot is already booked.");
-      return;
-    }
-
-    // Get the currently selected date from the form
-    const selectedDate = form.getValues("schedule");
+  const handleSlotClick = (slot: string) => {
+    const selectedDate = form.getValues("schedule")
     if (!selectedDate || isNaN(selectedDate.getTime())) {
-      toast.error("Please select a valid date first.");
-      return;
+      toast.error("Please select a valid date first.")
+      return
     }
 
-    // Create new Date objects to avoid reference issues
-    const startDateTime = new Date(selectedDate);
-    // Set only the hours and minutes, preserving the selected date
-    startDateTime.setHours(slot.startTime.getHours(), slot.startTime.getMinutes(), 0, 0);
+    const [time, period] = slot.split(" ")
+    const [hours, minutes] = time.split(":").map(Number)
 
-    const endDateTime = new Date(selectedDate);
-    endDateTime.setHours(slot.endTime.getHours(), slot.endTime.getMinutes(), 0, 0);
+    let finalHours = hours
+    if (period.toLowerCase() === "pm" && hours !== 12) finalHours += 12
+    if (period.toLowerCase() === "am" && hours === 12) finalHours = 0
 
-    // Update both the schedule date and the timeSlot
-    form.setValue("schedule", startDateTime, { shouldValidate: true });
-    form.setValue("timeSlot", {
-      startTime: startDateTime,
-      endTime: endDateTime
-    }, { shouldValidate: true });
+    const finalSchedule = new Date(selectedDate)
+    finalSchedule.setHours(finalHours, minutes, 0, 0)
 
-    // Update the visual time slot selector - this is what was missing
-    const timeSlotString = formatTimeSlot(startDateTime, endDateTime);
-    setSelectedTimeSlot(timeSlotString);
-    
-    // This should not trigger a fetch since we're just updating the time, not changing doctor/date
-  };
+    form.setValue("schedule", finalSchedule)
+    setSelectedTimeSlot(slot)
+  }
 
   const generateTimeSlots = (startTime: string, endTime: string, interval: number) => {
     const slots = []
@@ -360,7 +243,7 @@ const AppointmentForm = ({ userId, patientId, patientName, type, appointment, se
     const end = new Date(endTime)
 
     while (start < end) {
-      const slotEnd = new Date(start)
+      let slotEnd = new Date(start)
       slotEnd.setMinutes(slotEnd.getMinutes() + interval)
 
       if (slotEnd > end) break
@@ -375,121 +258,6 @@ const AppointmentForm = ({ userId, patientId, patientName, type, appointment, se
 
     return slots
   }
-
-  // Improved isTimeSlotBooked function with better date handling
-  const isTimeSlotBooked = useCallback((slot: { startTime: Date; endTime: Date }) => {
-    if (!bookedAppointments || bookedAppointments.length === 0) return false;
-    
-    // Get the selected date from the form
-    const selectedDate = form.getValues("schedule");
-    if (!selectedDate) return false;
-    
-    // Create a version of the slot with the correct date
-    const slotWithCorrectDate = {
-      startTime: new Date(selectedDate),
-      endTime: new Date(selectedDate)
-    };
-    
-    // Set time from the slot parameter
-    slotWithCorrectDate.startTime.setHours(slot.startTime.getHours(), slot.startTime.getMinutes(), 0, 0);
-    slotWithCorrectDate.endTime.setHours(slot.endTime.getHours(), slot.endTime.getMinutes(), 0, 0);
-    
-    // Current appointment ID (if editing)
-    const currentAppointmentId = appointment?._id;
-
-    return bookedAppointments.some(appt => {
-      // Skip comparing with the current appointment being edited
-      if (currentAppointmentId && appt._id === currentAppointmentId) return false;
-      
-      // Ensure we're working with Date objects
-      const apptStart = new Date(appt.timeSlot.startTime);
-      const apptEnd = new Date(appt.timeSlot.endTime);
-      
-      // Check if the appointment is on the same day
-      const sameDay = 
-        apptStart.getDate() === slotWithCorrectDate.startTime.getDate() &&
-        apptStart.getMonth() === slotWithCorrectDate.startTime.getMonth() &&
-        apptStart.getFullYear() === slotWithCorrectDate.startTime.getFullYear();
-      
-      if (!sameDay) return false;
-      
-      // Check for time overlap
-      return (
-        (slotWithCorrectDate.startTime >= apptStart && slotWithCorrectDate.startTime < apptEnd) || // Slot starts during an appointment
-        (slotWithCorrectDate.endTime > apptStart && slotWithCorrectDate.endTime <= apptEnd) || // Slot ends during an appointment
-        (slotWithCorrectDate.startTime <= apptStart && slotWithCorrectDate.endTime >= apptEnd) // Slot encompasses an appointment
-      );
-    });
-  }, [bookedAppointments, appointment, form]);
-
-  // Watch for changes in primaryPhysician and schedule but use debouncing to prevent excessive API calls
-  const doctorRaw = useWatch({ control: form.control, name: "primaryPhysician" });
-  const selectedDate = useWatch({ control: form.control, name: "schedule" });
-
-  // Compare with previous values and only trigger fetch when meaningful changes occur
-  useEffect(() => {
-    if (!doctorRaw || !selectedDate) return;
-    
-    let needsFetch = false;
-    let currentDoctor = null;
-    
-    try {
-      // Only parse if it's a string and non-empty
-      if (typeof doctorRaw === "string" && doctorRaw.trim() !== "") {
-        currentDoctor = JSON.parse(doctorRaw);
-      }
-    } catch (e) {
-      console.error("Error parsing doctor data:", e);
-      return;
-    }
-    
-    if (!currentDoctor || !currentDoctor.id) return;
-    
-    // Check if doctor changed
-    if (!currentDoctorRef.current || currentDoctorRef.current.id !== currentDoctor.id) {
-      currentDoctorRef.current = currentDoctor;
-      needsFetch = true;
-    }
-    
-    // Check if date changed (only care about the day, not time)
-    if (!currentDateRef.current || 
-        currentDateRef.current.getDate() !== selectedDate.getDate() ||
-        currentDateRef.current.getMonth() !== selectedDate.getMonth() ||
-        currentDateRef.current.getFullYear() !== selectedDate.getFullYear()) {
-      currentDateRef.current = new Date(selectedDate);
-      needsFetch = true;
-    }
-    
-    // Only set flag if we need to fetch
-    if (needsFetch) {
-      shouldFetchAppointmentsRef.current = true;
-      
-      // Trigger the fetch immediately - this is the key change
-      fetchAppointments(currentDoctor.id, selectedDate);
-    }
-  }, [doctorRaw, selectedDate]);
-
-  // Separate function for fetching appointments
-  const fetchAppointments = async (doctorId: string, date: Date) => {
-    if (!doctorId || !date) return;
-    
-    try {
-      // Create a date that represents the start of the selected day
-      const dayStart = new Date(date);
-      dayStart.setHours(0, 0, 0, 0);
-      
-      const appointments = await getBookedAppointments(doctorId, dayStart);
-      setBookedAppointments(appointments || []);
-    }
-    catch (error) {
-      console.error("Error fetching appointments:", error);
-      setBookedAppointments([]);
-    }
-    finally {
-      // Reset the flag after fetch regardless of result
-      shouldFetchAppointmentsRef.current = false;
-    }
-  };
 
   return (
     <Form {...form}>
@@ -550,42 +318,22 @@ const AppointmentForm = ({ userId, patientId, patientName, type, appointment, se
                 <h6 className="text-teal-100 text-sm font-medium mb-3 pt-1">Available Time Slots</h6>
                 {doctors.length > 0 && form.watch("primaryPhysician") ? (
                   (() => {
-                    let selectedDoctorData;
-                    try {
-                      const selectedDoctor = JSON.parse(form.watch("primaryPhysician"));
-                      selectedDoctorData = doctors.find((doc) => doc._id === selectedDoctor.id);
-                    } catch (e) {
-                      return <p className="text-sm text-teal-400/60">Invalid doctor selection.</p>;
-                    }
+                    const selectedDoctor = JSON.parse(form.watch("primaryPhysician"))
+                    const doctorData = doctors.find((doc) => doc._id === selectedDoctor.id)
 
-                    return selectedDoctorData?.availableSlots?.length > 0 ? (
+                    return doctorData?.availableSlots.length > 0 ? (
                       <ul className="space-y-2 cursor-pointer">
-                        {selectedDoctorData?.availableSlots
-                          .flatMap((slot) => generateTimeSlots(slot.startTime, slot.endTime, 30))
-                          .map((slot, index) => {
-                            const isBooked = isTimeSlotBooked(slot);
-                            const slotTimeString = formatTimeSlot(slot.startTime, slot.endTime);
-                            const isSelected = selectedTimeSlot === slotTimeString;
-                            
-                            return (
-                              <li
-                                key={index}
-                                onClick={() => handleSlotClick(slot, isBooked)}
-                                className={`
-                                  text-sm p-2 rounded-md text-center transition-all duration-200 
-                                  ${isBooked 
-                                    ? "bg-red-900/70 text-red-200 cursor-not-allowed" 
-                                    : isSelected
-                                      ? "bg-teal-950 text-white"
-                                      : "bg-[#014d3b]/50 text-teal-300 hover:bg-teal-950/70 cursor-pointer"
-                                  }
-                                `}
-                              >
-                                {slotTimeString}
-                                {isBooked && <span className="ml-2 text-xs">(Booked)</span>}
-                              </li>
-                            );
-                          })}
+                        {doctorData.availableSlots.flatMap((slot) => generateTimeSlots(slot.startTime, slot.endTime, 30)).map((slot, index) => (
+                          <li
+                            key={index}
+                            className={`text-teal-300 text-sm bg-[#014d3b]/50 p-2 rounded-md text-center cursor-pointer transition-all duration-200 ${selectedTimeSlot === `${slot.startTime}-${slot.endTime}` ? "bg-teal-950 text-white" : ""
+                              }`}
+                            // onClick={() => handleSlotClick(`${slot.startTime}-${slot.endTime}`)}
+                          >
+                            {slot.startTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} -{" "}
+                            {slot.endTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                          </li>
+                        ))}
                       </ul>
                     ) : (
                       <p className="text-sm text-teal-400/60">No slots available for this doctor.</p>

@@ -1,42 +1,47 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Schema, Document } from "mongoose";
 
 // Define the Appointment Schema
 const appointmentSchema: Schema = new Schema(
   {
-    userId: { type: String, required: true },
-    patientId: { type: String, required: true },
-    patientName: { type: String, required: true },
+    userId: {
+      type: String,
+      required: true,
+    },
+    patientId: {
+      type: String,
+      required: true, // The patientId must be provided
+    },
+    patientName: {
+      type: String,
+      required: true,
+    },
     primaryPhysician: {
-      id: { type: String, required: true },
-      name: { type: String, required: true },
-      image: { type: String },
+      id: { type: String, required: true }, // Store doctor ID
+      name: { type: String, required: true }, // Store doctor Name
     },
-    reason: { type: String, required: true },
-
-    // Time slot structure with start and end times
-    timeSlot: {
-      startTime: { type: Date, required: true },
-      endTime: { type: Date, required: true },
+    reason: {
+      type: String,
+      required: true, // Reason for the appointment
     },
-
+    schedule: {
+      type: Date,
+      required: true, // The appointment's scheduled time
+    },
     status: {
       type: String,
       enum: ["pending", "scheduled", "cancelled"],
-      default: "pending",
+      default: "pending", // Default status is "pending"
     },
-    note: { type: String, default: "" },
-    cancellationReason: { type: String, default: "" },
+    note: {
+      type: String,
+      default: "", // Default to empty string if no note is provided
+    },
   },
-  { timestamps: true }
+  { timestamps: true } // Add timestamps for createdAt and updatedAt fields
 );
 
-// Index for optimized queries
-appointmentSchema.index({ "timeSlot.startTime": 1, "timeSlot.endTime": 1 });
-appointmentSchema.index({ userId: 1 });
-appointmentSchema.index({ patientId: 1 });
-appointmentSchema.index({ "primaryPhysician.id": 1 });
-appointmentSchema.index({ status: 1 });
-
-const Appointment = mongoose.models.Appointment || mongoose.model("Appointment", appointmentSchema);
+// Ensure the model is not redefined if already compiled
+const Appointment =
+  mongoose.models.Appointment || mongoose.model("Appointment", appointmentSchema);
 
 export default Appointment;
