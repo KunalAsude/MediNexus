@@ -120,7 +120,7 @@ const Success = async ({ params: { userId }, searchParams }: SearchParamProps) =
           </div>
 
           {/* Date - Highlighted */}
-          <div className="flex items-center gap-3  bg-teal-800/30 p-3 rounded-md">
+          <div className="flex items-center align-middle gap-3 p-1  rounded-md">
             <Calendar className="h-5 w-5 text-teal-300" />
             <div>
               <p className="text-sm text-teal-300">Date</p>
@@ -129,7 +129,7 @@ const Success = async ({ params: { userId }, searchParams }: SearchParamProps) =
           </div>
 
           {/* Time Slot - Highlighted */}
-          <div className="flex items-center gap-3 bg-teal-800/30 p-3 rounded-md">
+          <div className="flex items-center align-middle gap-3 p-1 rounded-md">
             <Clock className="h-5 w-5 text-teal-300" />
             <div>
               <p className="text-sm text-teal-300">Time Slot</p>
