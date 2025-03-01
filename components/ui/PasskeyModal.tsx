@@ -29,7 +29,8 @@ const PasskeyModal = ({ open, onClose }: { open: boolean; onClose: () => void })
   const [passkey, setPasskey] = useState("");
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false); // Add a loading state
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasFetchedDoctors, setHasFetchedDoctors] = useState(false); // Track if doctors have been fetched
   const selectedDoctor = useSelector((state: RootState) => state.doctor.selectedDoctor);
   const router = useRouter();
   const { toast } = useToast();
@@ -37,14 +38,22 @@ const PasskeyModal = ({ open, onClose }: { open: boolean; onClose: () => void })
   const [localDoctor, setLocalDoctor] = useState("");
   const hospitalId = useSelector((state: any) => state.hospital.selectedHospitalId);
 
+  // Save hospitalId to localStorage whenever it changes
   useEffect(() => {
-    if (open) {
-      fetchDoctors(); // Only fetch when modal is open
+    if (hospitalId) {
+      localStorage.setItem("hospitalId", hospitalId);
     }
-  }, [open]);
+  }, [hospitalId]);
+
+  // Fetch doctors when modal opens and doctors haven't been fetched yet
+  useEffect(() => {
+    if (open && !hasFetchedDoctors && hospitalId) {
+      fetchDoctors();
+    }
+  }, [open, hasFetchedDoctors, hospitalId]);
 
   const fetchDoctors = async () => {
-    setIsLoading(true); // Start loading
+    setIsLoading(true);
     try {
       console.log("Fetching doctors for hospitalId:", hospitalId);
       const doctorsData = await getDoctorsByHospital(hospitalId);
@@ -54,17 +63,20 @@ const PasskeyModal = ({ open, onClose }: { open: boolean; onClose: () => void })
         id: doc._id,
         name: doc.name,
       }));
+
       setDoctors(formattedDoctors);
+      localStorage.setItem("doctors", JSON.stringify(formattedDoctors)); // Save to localStorage
+      setHasFetchedDoctors(true); // Mark doctors as fetched
     } catch (error) {
       console.error("Error fetching doctors:", error);
     } finally {
-      setIsLoading(false); // Stop loading
+      setIsLoading(false);
     }
   };
 
   const closeModal = () => {
-    setPasskey(""); // Reset passkey field
-    setLocalDoctor(""); // Reset doctor selection in UI
+    setPasskey("");
+    setLocalDoctor("");
     setError("");
     onClose();
   };
@@ -140,15 +152,11 @@ const PasskeyModal = ({ open, onClose }: { open: boolean; onClose: () => void })
                           appearance-none transition-all"
               >
                 <option value="">Select a Doctor</option>
-                {doctors.length > 0 ? (
-                  doctors.map((doctor) => (
-                    <option key={doctor.id} value={doctor.id}>
-                      {doctor.name}
-                    </option>
-                  ))
-                ) : (
-                  <option value="" disabled>No doctors available</option>
-                )}
+                {doctors.map((doctor) => (
+                  <option key={doctor.id} value={doctor.id}>
+                    {doctor.name}
+                  </option>
+                ))}
               </select>
             )}
 

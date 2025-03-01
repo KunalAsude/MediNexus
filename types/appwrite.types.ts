@@ -60,3 +60,43 @@ export interface UpdateAvailabilityResponse {
   success: boolean;
   message: string;
 }
+
+// Add these types to your existing types file
+export interface TimeSlot {
+  startTime: Date;
+  endTime: Date;
+}
+
+export interface WeeklyAvailability {
+  monday: TimeSlot[];
+  tuesday: TimeSlot[];
+  wednesday: TimeSlot[];
+  thursday: TimeSlot[];
+  friday: TimeSlot[];
+  saturday: TimeSlot[];
+  sunday: TimeSlot[];
+}
+
+export interface Doctor {
+  _id?: string;
+  name: string;
+  specialization: string;
+  experience: number;
+  phone: string;
+  email: string;
+  hospitalId: string;
+  ratings: {
+    average: number;
+    reviews: number;
+  };
+  status: "active" | "inactive";
+  availableSlots: {
+    startTime: Date;
+    endTime: Date;
+  }[];
+  weeklyAvailability?: WeeklyAvailability;
+  dateSpecificSlots?: Map<string, TimeSlot[]>;
+  image: string;
+}
+
+// Keep your existing types below

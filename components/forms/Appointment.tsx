@@ -35,7 +35,20 @@ export interface Doctor {
   email: string
   phone: string
   status: string
+  // Legacy field - keep for backward compatibility
   availableSlots: { startTime: string; endTime: string }[]
+  // New weekly availability structure
+  weeklyAvailability: {
+    monday: { startTime: string; endTime: string }[]
+    tuesday: { startTime: string; endTime: string }[]
+    wednesday: { startTime: string; endTime: string }[]
+    thursday: { startTime: string; endTime: string }[]
+    friday: { startTime: string; endTime: string }[]
+    saturday: { startTime: string; endTime: string }[]
+    sunday: { startTime: string; endTime: string }[]
+  }
+  // Date specific slots for holidays or special hours
+  dateSpecificSlots?: Map<string, { startTime: string; endTime: string }[]>
 }
 
 export interface PrimaryPhysician {
@@ -91,6 +104,12 @@ const AppointmentForm = ({ userId, patientId, patientName, type, appointment, se
   const [bookedAppointments, setBookedAppointments] = useState<any[]>([])
   
   const AppointmentFormValidation = getAppointmentSchema(type)
+
+  // Helper function to get day name from Date object
+  const getDayOfWeek = (date: Date): string => {
+    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    return days[date.getDay()];
+  };
 
   // Parse dates safely for the initial form values
   const safeParseDate = (dateString: string | undefined | null): Date | null => {
@@ -218,6 +237,30 @@ const AppointmentForm = ({ userId, patientId, patientName, type, appointment, se
       [],
       { hour: "2-digit", minute: "2-digit" }
     )}`;
+  };
+
+  // Get available slots for the selected date
+  const getAvailableSlotsForSelectedDate = (selectedDoctor: Doctor, selectedDate: Date) => {
+    if (!selectedDoctor || !selectedDate) return [];
+    
+    // Format date as YYYY-MM-DD for checking date-specific slots
+    const dateString = selectedDate.toISOString().split('T')[0];
+    
+    // Check if there are date-specific slots (like holidays or special hours)
+    if (selectedDoctor.dateSpecificSlots && selectedDoctor.dateSpecificSlots.has(dateString)) {
+      return selectedDoctor.dateSpecificSlots.get(dateString) || [];
+    }
+    
+    // Otherwise use the weekly recurring schedule based on day of week
+    const dayOfWeek = getDayOfWeek(selectedDate);
+    
+    // If weeklyAvailability exists and has slots for this day, use them
+    if (selectedDoctor.weeklyAvailability && selectedDoctor.weeklyAvailability[dayOfWeek]) {
+      return selectedDoctor.weeklyAvailability[dayOfWeek];
+    }
+    
+    // Fallback to legacy availableSlots if needed
+    return selectedDoctor.availableSlots || [];
   };
 
   const onSubmit = async (values: AppointmentFormData) => {
@@ -390,6 +433,30 @@ const AppointmentForm = ({ userId, patientId, patientName, type, appointment, se
     return slots
   }
 
+  // Generate time slots for the selected date
+  const generateTimeSlotsForSelectedDate = () => {
+    try {
+      if (!form.watch("primaryPhysician") || !form.watch("schedule")) return [];
+      
+      const selectedDoctor = JSON.parse(form.watch("primaryPhysician"));
+      const doctorData = doctors.find((doc) => doc._id === selectedDoctor.id);
+      const selectedDate = form.getValues("schedule");
+      
+      if (!doctorData || !selectedDate) return [];
+      
+      // Get the available slot ranges for this date (either from weekly or date-specific)
+      const availableSlotRanges = getAvailableSlotsForSelectedDate(doctorData, selectedDate);
+      
+      // Generate 30-minute slots from the available ranges
+      return availableSlotRanges.flatMap(slot => 
+        generateTimeSlots(slot.startTime, slot.endTime, 30)
+      );
+    } catch (e) {
+      console.error("Error generating time slots:", e);
+      return [];
+    }
+  };
+
   // Improved isTimeSlotBooked function with better date handling
   const isTimeSlotBooked = useCallback((slot: { startTime: Date; endTime: Date }) => {
     if (!bookedAppointments || bookedAppointments.length === 0) return false;
@@ -492,19 +559,17 @@ const AppointmentForm = ({ userId, patientId, patientName, type, appointment, se
                   </div>
                 ) : doctors.length > 0 && form.watch("primaryPhysician") ? (
                   (() => {
-                    let selectedDoctorData;
                     try {
                       const selectedDoctor = JSON.parse(form.watch("primaryPhysician"));
-                      selectedDoctorData = doctors.find((doc) => doc._id === selectedDoctor.id);
-                    } catch (e) {
-                      return <p className="text-sm text-teal-400/60">Invalid doctor selection.</p>;
-                    }
-
-                    return selectedDoctorData?.availableSlots?.length > 0 ? (
-                      <ul className="grid grid-cols-2 gap-2 cursor-pointer">
-                        {selectedDoctorData?.availableSlots
-                          .flatMap((slot) => generateTimeSlots(slot.startTime, slot.endTime, 30))
-                          .map((slot, index) => {
+                      const selectedDoctorData = doctors.find((doc) => doc._id === selectedDoctor.id);
+                      
+                      if (!selectedDoctorData) return <p className="text-sm text-teal-400/60">Doctor data not found.</p>;
+                      
+                      const timeSlots = generateTimeSlotsForSelectedDate();
+                      
+                      return timeSlots.length > 0 ? (
+                        <ul className="grid grid-cols-2 gap-2 cursor-pointer">
+                          {timeSlots.map((slot, index) => {
                             const isBooked = isTimeSlotBooked(slot);
                             const slotTimeString = formatTimeSlot(slot.startTime, slot.endTime);
                             const isSelected = selectedTimeSlot === slotTimeString;
@@ -527,10 +592,17 @@ const AppointmentForm = ({ userId, patientId, patientName, type, appointment, se
                               </li>
                             );
                           })}
-                      </ul>
-                    ) : (
-                      <p className="text-sm text-teal-400/60">No slots available for this doctor.</p>
-                    )
+                        </ul>
+                      ) : (
+                        <div className="text-center py-8">
+                          <p className="text-sm text-teal-400/60">No available slots for this day.</p>
+                          <p className="text-xs text-teal-400/40 mt-2">Try selecting a different date or doctor.</p>
+                        </div>
+                      );
+                    } catch (e) {
+                      console.error("Error rendering time slots:", e);
+                      return <p className="text-sm text-teal-400/60">Error loading time slots.</p>;
+                    }
                   })()
                 ) : (
                   <p className="text-sm text-teal-400/60">Select a doctor to view slots.</p>
