@@ -39,7 +39,7 @@ export const columns: ColumnDef<Appointment>[] = [
             {row.original?.timeSlot?.startTime 
               ? formatDateTime(row.original.timeSlot.startTime).dateTime 
               : "N/A"}
-            {console.log(row.original?.timeSlot?.startTime)}
+
           </p>
           
         )

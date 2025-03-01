@@ -163,51 +163,78 @@ export const getAllHospitals = async () => {
   }
 };
 
- // Import the Doctor model
- export const updateDoctorAvailability = async (
-  doctorId: string,
-  isActive: boolean,
-  availableSlots: { startTime: Date; endTime: Date }[]
-): Promise<{ success: boolean; doctor?: any; message?: string }> => {
+
+export const updateDoctorAvailability = async (
+  doctor,
+  isActive,
+  availableSlots = [], // Kept for backward compatibility
+  weeklyAvailability
+) => {
   try {
-    if (!doctorId || !Array.isArray(availableSlots) || availableSlots.length === 0) {
-      throw new Error("Invalid input: doctorId and availableSlots are required.");
+    console.log("Updating doctor availability...");
+    
+    if (!doctor) {
+      throw new Error("Invalid doctor information");
     }
 
-    const formattedSlots = availableSlots.map(slot => {
-      const startTime = new Date(slot.startTime);
-      const endTime = new Date(slot.endTime);
+    if (!weeklyAvailability || typeof weeklyAvailability !== "object") {
+      throw new Error("Invalid weeklyAvailability format");
+    }
 
-      if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
-        throw new Error("Invalid date format in availableSlots.");
+    const doctorId = doctor._id || doctor; // Ensure proper doctor ID
+
+    const formattedWeeklyAvailability = {};
+    const daysOfWeek = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+
+    daysOfWeek.forEach((day) => {
+      if (!weeklyAvailability[day] || !Array.isArray(weeklyAvailability[day])) {
+        formattedWeeklyAvailability[day] = [];
+        return;
       }
 
-      return {
-        startTime: startTime.toISOString(),
-        endTime: endTime.toISOString(),
-      };
+      formattedWeeklyAvailability[day] = weeklyAvailability[day].map((slot) => {
+        const formatTime = (time) => {
+          if (time instanceof Date) {
+            return time.toISOString().substring(11, 16); // Extract HH:MM
+          }
+          return time; // Assume it's already a valid string
+        };
+
+        return {
+          startTime: formatTime(slot.startTime),
+          endTime: formatTime(slot.endTime),
+        };
+      });
     });
 
+    // Ensure database connection
     await connect();
 
+    // Prepare the update object with $set
+    const updateData = {
+      $set: {
+        status: isActive ? "active" : "inactive",
+        weeklyAvailability: formattedWeeklyAvailability,
+      },
+    };
+
+    // Update the doctor document
     const updatedDoctor = await doctorModal.findByIdAndUpdate(
       new mongoose.Types.ObjectId(doctorId),
-      {
-        status: isActive ? "active" : "inactive",
-        availableSlots: formattedSlots.map(slot => ({
-          startTime: new Date(slot.startTime),
-          endTime: new Date(slot.endTime),
-        })),
-      },
-      { new: true }
+      updateData,
+      { new: true, runValidators: true } // Ensures validation is applied
     );
 
     if (!updatedDoctor) {
-      throw new Error("Doctor not found.");
+      throw new Error("Doctor not found");
     }
 
-    return { success: true, doctor: JSON.parse(JSON.stringify(updatedDoctor)) };
+    return {
+      success: true,
+      doctor: updatedDoctor.toObject(),
+    };
   } catch (error) {
+    console.error("Error updating doctor availability:", error);
     return {
       success: false,
       message: error instanceof Error ? error.message : "An unknown error occurred",
@@ -216,4 +243,25 @@ export const getAllHospitals = async () => {
 };
 
 
+export const getDoctorById = async (doctorId: object) => {
+  try {
+    if (!doctorId) {
+      throw new Error("Doctor ID is required");
+    }
+    console.log("Doctor ID:", doctorId);
+
+    await connect(); // Ensure database connection
+
+    const doctor = await doctorModal.findById(new mongoose.Types.ObjectId(doctorId));
+
+    if (!doctor) {
+      throw new Error("Doctor not found");
+    }
+
+    return JSON.parse(JSON.stringify(doctor)); // Convert to plain object
+  } catch (error) {
+    console.error("Error fetching doctor by ID:", error);
+    return null;
+  }
+};
 

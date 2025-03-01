@@ -14,21 +14,17 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     setLoading(true);
-
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 2000); 
-
+    const timer = setTimeout(() => setLoading(false), 2000);
     return () => clearTimeout(timer);
   }, [pathname]);
 
   return (
-    <Providers> 
-      <PersistGate loading={null} persistor={persistor}>
-        {isLoading && <Loader />} 
+    <PersistGate loading={null} persistor={persistor}> 
+      <Providers> 
+        {isLoading && <Loader />}
         {children}
         <Toaster />
-      </PersistGate>
-    </Providers>
+      </Providers>
+    </PersistGate>
   );
 }

@@ -1,19 +1,35 @@
 import { configureStore } from "@reduxjs/toolkit";
 import doctorReducer from "./slice/doctorSlice";
-import storage from "redux-persist/lib/storage";
-import { persistReducer, persistStore } from "redux-persist";
-import { combineReducers } from "redux";
 import hospitalReducer from "./slice/hospitalSlice";
+import storage from "redux-persist/lib/storage"; // Uses localStorage
+import { persistReducer, persistStore, createTransform } from "redux-persist";
+import { combineReducers } from "redux";
+
+// ✅ Fix: Transform to prevent JSON parsing issues
+const transformCircular = createTransform(
+  (inboundState) => inboundState, // Store state as is
+  (outboundState) => {
+    try {
+      return typeof outboundState === "string"
+        ? JSON.parse(outboundState) 
+        : outboundState;
+    } catch (e) {
+      console.warn("Redux Persist Parsing Error:", e);
+      return outboundState; // Return as is if parsing fails
+    }
+  }
+);
 
 const persistConfig = {
   key: "root",
-  storage, // Stores data in localStorage
-  whitelist: ["doctor"], // Persist only the `doctor` slice
+  storage,
+  transforms: [transformCircular], // ✅ Applies to all slices
 };
 
 const rootReducer = combineReducers({
   doctor: doctorReducer,
-  hospital: hospitalReducer
+  hospital: hospitalReducer,
+  // Add more reducers, they will persist automatically
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -22,7 +38,7 @@ export const store = configureStore({
   reducer: persistedReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
-      serializableCheck: false, // Required for redux-persist
+      serializableCheck: false, // Avoid Redux warnings
     }),
 });
 
