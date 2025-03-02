@@ -152,13 +152,9 @@ export default function Home() {
     }, [])
 
     const handleStoreClick = () => {
-        toast({
-            title: "Store is Under Maintenance",
-            description: "Redirecting to medical store portal...",
-            duration: 2000,
-            variant: "destructive",
-        })
-    }
+        window.location.href = "https://medical-store-bice.vercel.app/";
+    };
+    
 
     const filteredHospitals = hospitals.filter(
         (hospital) =>
