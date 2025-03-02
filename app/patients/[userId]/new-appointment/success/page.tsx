@@ -34,25 +34,30 @@ const Success = async ({ params: { userId }, searchParams }: SearchParamProps) =
       const endDate = new Date(appointment.timeSlot.endTime)
 
       // Format the date: Feb 28, 2025
-      appointmentDate = startDate.toLocaleDateString("en-US", {
+      // Format the date: 28 Feb, 2025
+      appointmentDate = startDate.toLocaleDateString("en-IN", {
         year: "numeric",
         month: "short",
         day: "numeric",
+        timeZone: "Asia/Kolkata" // Indian Standard Time
       })
 
-      // Format the time: 6:15 AM - 6:45 AM
-      const startTime = startDate.toLocaleTimeString("en-US", {
+      // Format the time: 6:15 PM - 6:45 PM
+      const startTime = startDate.toLocaleTimeString("en-IN", {
         hour: "numeric",
         minute: "2-digit",
         hour12: true,
+        timeZone: "Asia/Kolkata" // Indian Standard Time
       })
 
-      const endTime = endDate.toLocaleTimeString("en-US", {
+      const endTime = endDate.toLocaleTimeString("en-IN", {
         hour: "numeric",
         minute: "2-digit",
         hour12: true,
+        timeZone: "Asia/Kolkata" // Indian Standard Time
       })
 
+      appointmentTime = `${startTime} - ${endTime} (IST)`
       appointmentTime = `${startTime} - ${endTime}`
 
       console.log("Formatted Date:", appointmentDate)
@@ -133,6 +138,7 @@ const Success = async ({ params: { userId }, searchParams }: SearchParamProps) =
             <Clock className="h-5 w-5 text-teal-300" />
             <div>
               <p className="text-sm text-teal-300">Time Slot</p>
+              <p className="font-medium">{console.log(appointmentTime)}</p>
               <p className="font-medium">{appointmentTime}</p>
             </div>
           </div>
