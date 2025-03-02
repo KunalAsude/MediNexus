@@ -269,29 +269,68 @@ export const formatDateTime =async (dateString: string) => {
 export async function getBookedAppointments(doctorId: string, date: Date) {
   try {
     await connect();
-
+    
+    // Create date objects for the start and end of the selected date in UTC
     const startOfDayUTC = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 0, 0, 0, 0));
     const endOfDayUTC = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 23, 59, 59, 999));
-
-
-    // Query MongoDB
+    
+    // Query MongoDB for appointments with the doctor's ID that start on the selected date
     const bookedAppointments = await Appointment.find({
-      "primaryPhysician.id": doctorId,
+      "primaryPhysician.id": doctorId, // Using the doctor's _id directly
       "timeSlot.startTime": { $gte: startOfDayUTC, $lt: endOfDayUTC }
-    }).lean(); // Converts to plain objects
-
-    // Convert MongoDB _id objects to strings
+    }).lean(); // Convert to plain objects for serialization
+    
+    // Serialize the appointments for client-side use
     const serializedAppointments = bookedAppointments.map((appointment) => ({
       ...appointment,
-      _id: appointment._id.toString(), // Ensure _id is a string
-      createdAt: appointment.createdAt.toISOString(), // Convert dates to strings
+      _id: appointment._id.toString(), // Convert MongoDB ObjectId to string
+      createdAt: appointment.createdAt.toISOString(),
       updatedAt: appointment.updatedAt.toISOString(),
+      // Ensure timeSlot dates are properly serialized
+      timeSlot: {
+        startTime: appointment.timeSlot.startTime.toISOString(),
+        endTime: appointment.timeSlot.endTime.toISOString()
+      }
     }));
+    
     return serializedAppointments;
   } catch (error) {
     console.error("Error fetching booked appointments:", error);
     throw error;
   }
+}
+
+// Improved isTimeSlotBooked function for the client component
+export async function isTimeSlotBooked(
+  slot: { startTime: Date; endTime: Date },
+  bookedAppointments: any[],
+  currentAppointmentId?: string
+) {
+  if (!bookedAppointments || bookedAppointments.length === 0) return false;
+  
+  // Create normalized time values for comparison (in minutes since midnight)
+  const slotStartMinutes = slot.startTime.getHours() * 60 + slot.startTime.getMinutes();
+  const slotEndMinutes = slot.endTime.getHours() * 60 + slot.endTime.getMinutes();
+  
+  return bookedAppointments.some(appt => {
+    // Skip the current appointment being edited
+    if (currentAppointmentId && appt._id === currentAppointmentId) return false;
+    
+    // Parse the appointment times
+    const apptStartTime = new Date(appt.timeSlot.startTime);
+    const apptEndTime = new Date(appt.timeSlot.endTime);
+    
+    // Convert to minutes since midnight for easy comparison
+    const apptStartMinutes = apptStartTime.getHours() * 60 + apptStartTime.getMinutes();
+    const apptEndMinutes = apptEndTime.getHours() * 60 + apptEndTime.getMinutes();
+    
+    // Check for any overlap
+    return (
+      (slotStartMinutes >= apptStartMinutes && slotStartMinutes < apptEndMinutes) || 
+      (slotEndMinutes > apptStartMinutes && slotEndMinutes <= apptEndMinutes) ||
+      (slotStartMinutes <= apptStartMinutes && slotEndMinutes >= apptEndMinutes) 
+    );
+  });
 }
 
 

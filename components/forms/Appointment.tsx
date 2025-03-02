@@ -6,7 +6,7 @@ import { Form } from "@/components/ui/form"
 import { SelectItem } from "@/components/ui/select"
 import CustomFormField from "../customFormField"
 import SubmitButton from "../SubmitButton"
-import { useEffect, useState, useCallback, useRef } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { getAppointmentSchema } from "@/lib/Validation"
 import { useRouter } from "next/navigation"
 import { createAppointment, getBookedAppointments, updateAppointment } from "@/lib/actions/appointment.actions"
@@ -199,6 +199,44 @@ const AppointmentForm = ({ userId, patientId, patientName, type, appointment, se
     }
   }, [appointment, form]);
 
+  // Helper function to check if a time slot is booked
+  const isTimeSlotBooked = useCallback((slot: { startTime: Date; endTime: Date }) => {
+    if (!bookedAppointments || bookedAppointments.length === 0) return false;
+    
+    // Get the selected date from the form
+    const selectedDate = form.getValues("schedule");
+    if (!selectedDate) return false;
+    
+    // Create a version of the slot with the correct date
+    const slotWithCorrectDate = {
+      startTime: new Date(selectedDate),
+      endTime: new Date(selectedDate)
+    };
+    
+    // Set time from the slot parameter
+    slotWithCorrectDate.startTime.setHours(slot.startTime.getHours(), slot.startTime.getMinutes(), 0, 0);
+    slotWithCorrectDate.endTime.setHours(slot.endTime.getHours(), slot.endTime.getMinutes(), 0, 0);
+    
+    // Current appointment ID (if editing)
+    const currentAppointmentId = appointment?._id;
+
+    return bookedAppointments.some(appt => {
+      // Skip comparing with the current appointment being edited
+      if (currentAppointmentId && appt._id === currentAppointmentId) return false;
+      
+      // Ensure we're working with Date objects
+      const apptStart = new Date(appt.timeSlot.startTime);
+      const apptEnd = new Date(appt.timeSlot.endTime);
+      
+      // Check for time overlap
+      return (
+        (slotWithCorrectDate.startTime >= apptStart && slotWithCorrectDate.startTime < apptEnd) || // Slot starts during an appointment
+        (slotWithCorrectDate.endTime > apptStart && slotWithCorrectDate.endTime <= apptEnd) || // Slot ends during an appointment
+        (slotWithCorrectDate.startTime <= apptStart && slotWithCorrectDate.endTime >= apptEnd) // Slot encompasses an appointment
+      );
+    });
+  }, [bookedAppointments, appointment, form]);
+
   // Fetch booked appointments when doctor or date changes
   useEffect(() => {
     const fetchBookedAppointments = async () => {
@@ -218,6 +256,7 @@ const AppointmentForm = ({ userId, patientId, patientName, type, appointment, se
         
         setIsLoadingSlots(true);
         const appointmentsData = await getBookedAppointments(doctorId, schedule);
+        console.log("Fetched appointments:", appointmentsData);
         setBookedAppointments(appointmentsData || []);
       } catch (error) {
         console.error("Error fetching booked appointments:", error);
@@ -411,27 +450,41 @@ const AppointmentForm = ({ userId, patientId, patientName, type, appointment, se
     setSelectedTimeSlot(timeSlotString);
   };
 
-  const generateTimeSlots = (startTime: string, endTime: string, interval: number) => {
-    const slots = []
-    let start = new Date(startTime)
-    const end = new Date(endTime)
+  // This function parses a time string in the format "HH:MM" and returns a Date object
+  const parseTimeString = (timeString: string, baseDate: Date): Date => {
+    const [hours, minutes] = timeString.split(':').map(Number);
+    const result = new Date(baseDate);
+    result.setHours(hours, minutes, 0, 0);
+    return result;
+  };
 
-    while (start < end) {
-      const slotEnd = new Date(start)
-      slotEnd.setMinutes(slotEnd.getMinutes() + interval)
-
-      if (slotEnd > end) break
-
-      slots.push({
-        startTime: new Date(start),
-        endTime: new Date(slotEnd),
-      })
-
-      start = new Date(slotEnd)
+  const generateTimeSlots = (startTimeStr: string, endTimeStr: string, interval: number, baseDate: Date) => {
+    const slots = [];
+    
+    // Parse the time strings into Date objects
+    const start = parseTimeString(startTimeStr, baseDate);
+    const end = parseTimeString(endTimeStr, baseDate);
+    
+    let currentSlotStart = new Date(start);
+    
+    while (currentSlotStart < end) {
+      const slotEnd = new Date(currentSlotStart);
+      slotEnd.setMinutes(slotEnd.getMinutes() + interval);
+      
+      // Ensure we don't create a slot that extends beyond the end time
+      if (slotEnd <= end) {
+        slots.push({
+          startTime: new Date(currentSlotStart),
+          endTime: new Date(slotEnd),
+        });
+      }
+      
+      // Move to the next slot start time
+      currentSlotStart = new Date(slotEnd);
     }
-
-    return slots
-  }
+    
+    return slots;
+  };
 
   // Generate time slots for the selected date
   const generateTimeSlotsForSelectedDate = () => {
@@ -444,56 +497,24 @@ const AppointmentForm = ({ userId, patientId, patientName, type, appointment, se
       
       if (!doctorData || !selectedDate) return [];
       
-      // Get the available slot ranges for this date (either from weekly or date-specific)
-      const availableSlotRanges = getAvailableSlotsForSelectedDate(doctorData, selectedDate);
+      // Get the day of week (monday, tuesday, etc.)
+      const dayOfWeek = getDayOfWeek(selectedDate);
       
-      // Generate 30-minute slots from the available ranges
-      return availableSlotRanges.flatMap(slot => 
-        generateTimeSlots(slot.startTime, slot.endTime, 30)
+      // If this day has no availability, return empty array
+      if (!doctorData.weeklyAvailability || !doctorData.weeklyAvailability[dayOfWeek] || 
+          doctorData.weeklyAvailability[dayOfWeek].length === 0) {
+        return [];
+      }
+      
+      // Generate 30-minute slots from the available ranges for this day
+      return doctorData.weeklyAvailability[dayOfWeek].flatMap(slot => 
+        generateTimeSlots(slot.startTime, slot.endTime, 30, selectedDate)
       );
     } catch (e) {
       console.error("Error generating time slots:", e);
       return [];
     }
   };
-
-  // Improved isTimeSlotBooked function with better date handling
-  const isTimeSlotBooked = useCallback((slot: { startTime: Date; endTime: Date }) => {
-    if (!bookedAppointments || bookedAppointments.length === 0) return false;
-    
-    // Get the selected date from the form
-    const selectedDate = form.getValues("schedule");
-    if (!selectedDate) return false;
-    
-    // Create a version of the slot with the correct date
-    const slotWithCorrectDate = {
-      startTime: new Date(selectedDate),
-      endTime: new Date(selectedDate)
-    };
-    
-    // Set time from the slot parameter
-    slotWithCorrectDate.startTime.setHours(slot.startTime.getHours(), slot.startTime.getMinutes(), 0, 0);
-    slotWithCorrectDate.endTime.setHours(slot.endTime.getHours(), slot.endTime.getMinutes(), 0, 0);
-    
-    // Current appointment ID (if editing)
-    const currentAppointmentId = appointment?._id;
-
-    return bookedAppointments.some(appt => {
-      // Skip comparing with the current appointment being edited
-      if (currentAppointmentId && appt._id === currentAppointmentId) return false;
-      
-      // Ensure we're working with Date objects
-      const apptStart = new Date(appt.timeSlot.startTime);
-      const apptEnd = new Date(appt.timeSlot.endTime);
-      
-      // Check for time overlap
-      return (
-        (slotWithCorrectDate.startTime >= apptStart && slotWithCorrectDate.startTime < apptEnd) || // Slot starts during an appointment
-        (slotWithCorrectDate.endTime > apptStart && slotWithCorrectDate.endTime <= apptEnd) || // Slot ends during an appointment
-        (slotWithCorrectDate.startTime <= apptStart && slotWithCorrectDate.endTime >= apptEnd) // Slot encompasses an appointment
-      );
-    });
-  }, [bookedAppointments, appointment, form]);
 
   return (
     <Form {...form}>
@@ -564,6 +585,21 @@ const AppointmentForm = ({ userId, patientId, patientName, type, appointment, se
                       const selectedDoctorData = doctors.find((doc) => doc._id === selectedDoctor.id);
                       
                       if (!selectedDoctorData) return <p className="text-sm text-teal-400/60">Doctor data not found.</p>;
+                      
+                      const selectedDate = form.getValues("schedule");
+                      const dayOfWeek = getDayOfWeek(selectedDate);
+                      
+                      // Check if the doctor has availability on this day
+                      if (!selectedDoctorData.weeklyAvailability || 
+                          !selectedDoctorData.weeklyAvailability[dayOfWeek] || 
+                          selectedDoctorData.weeklyAvailability[dayOfWeek].length === 0) {
+                        return (
+                          <div className="text-center py-8">
+                            <p className="text-sm text-teal-400/60">No available slots on {dayOfWeek}.</p>
+                            <p className="text-xs text-teal-400/40 mt-2">Try Selecting Another Date...</p>
+                          </div>
+                        );
+                      }
                       
                       const timeSlots = generateTimeSlotsForSelectedDate();
                       
