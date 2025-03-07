@@ -40,6 +40,15 @@
   background: rgba(4, 47, 46, 0.3); /* Darker Background */
 }
 
+.hide-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* WebKit browsers */
+}
+
 @layer utilities {
   /* ===== UTILITIES */
   .sidebar {
