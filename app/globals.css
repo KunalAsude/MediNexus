@@ -106,7 +106,7 @@
 
   /* ===== ADMIN */
   .admin-header {
-    @apply sticky top-3 z-20 mx-3 flex items-center justify-between rounded-2xl bg-gradient-to-r from-[#003e34] to-[#003e34]
+    @apply sticky top-2 z-20 mx-3 flex items-center justify-between rounded-2xl bg-gradient-to-r from-[#003e34] to-[#003e34]
     px-[5%] py-4 shadow-lg xl:px-12;
   }
 
