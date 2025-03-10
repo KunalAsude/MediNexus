@@ -294,7 +294,7 @@ export default function Home() {
                                 }
                             }
                         }}
-                        className={`p-2 rounded-full ${isListening ? "bg-red-500/20 text-red-400" : "bg-teal-800/30 hover:bg-teal-800/50"} transition-colors`}
+                        className={`p-2 rounded-full ${isListening ? "bg-red-500/20 text-red-400" : "bg-cyan-900 hover:bg-teal-800/50"} transition-colors`}
                         aria-label={isListening ? "Stop listening" : "Start voice assistant"}
                     >
                         {isListening ? <MicOff size={20} className="text-red-400" /> : <Mic size={20} className="text-teal-300" />}
@@ -333,13 +333,13 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <Button
               onClick={scrollToHospitals}
-              className="bg-teal-600 hover:bg-teal-700 text-white px-8 py-3 rounded-lg text-lg"
+              className="bg-teal-600 hover:bg-teal-700 text-white px-8 py-6 rounded-lg text-lg"
             >
               Find Hospitals <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
             <Button
               onClick={handleChatBoxClick}
-              className="bg-teal-900/50 hover:bg-teal-900/70 text-teal-300 border border-teal-600 px-8 py-3 rounded-lg text-lg"
+              className="bg-teal-900/50 hover:bg-teal-900/70 text-teal-300 border border-teal-600 px-8 py-6 rounded-lg text-lg"
             >
               Ask MediAssist <MessageSquare className="ml-2 h-5 w-5" />
             </Button>
@@ -398,7 +398,7 @@ export default function Home() {
                 <img
                   src="https://img.freepik.com/free-photo/high-angle-pill-foils-plastic-containers_23-2148533456.jpg?t=st=1741627790~exp=1741631390~hmac=38dd5daed84f10cb434337c9febc5bba2800dfecc766f693369ccea76cb4b5b4&w=1380"
                   alt="Medical Store"
-                  className="w-full h-full object-contain pr-4 rouned-2xl"
+                  className="w-full h-70 rouned-2xl object-contain sm:pr-4 rouned-2xl"
                 />
                 <div className="absolute inset-0 "></div>
               </div>
@@ -407,79 +407,7 @@ export default function Home() {
         </Card>
       </section>
 
-      {/* Statistics Section */}
-      <section className="py-10 px-4 sm:px-6 lg:px-5 max-w-full mx-auto hidden md:block">
-        <h2 className="text-3xl font-bold text-teal-400 mb-8 text-center">Our Impact</h2>
-        <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-8">
-          <Card className="bg-teal-900/20 border-teal-400/10 w-full h-full">
-            <h2 className="text-lg text-teal-50 mt-4 ml-5 mb-2">Weekly Appointment Statistics</h2>
-            <CardContent>
-              <LineChart data={appointmentData} title="Weekly Appointment Trends" />
-            </CardContent>
-          </Card>
-          <Card className="bg-teal-900/20 border-teal-400/10">
-            <h2 className="text-lg text-teal-50 mt-4 ml-5">Weekly Department Statistics</h2>
-            <CardContent>
-              <div className="w-64 h-64 mt-4 lg:w-80 lg:h-80 mx-auto relative">
-                <Doughnut
-                  className="mt-2 border-0"
-                  data={{
-                    labels: ["Cardiology", "Orthopedics", "Neurology", "Oncology", "Pediatrics"],
-                    datasets: [
-                      {
-                        data: [30, 20, 25, 15, 10],
-                        backgroundColor: [
-                          "#0A6A52", // Dark teal - Cardiology
-                          "#A07089", // Muted mauve - Orthopedics
-                          "#178245", // Deep greenish teal - Neurology
-                          "#158F80", // Dark green - Oncology
-                          "#B24D85", // Deep magenta-pink - Pediatrics
-                        ],
-                        borderColor: "rgba(255, 255, 255, 1)",
-                        borderWidth: 0,
-                        cutout: "60%", // Makes the center thinner
-                      },
-                    ],
-                  }}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: {
-                        display: false, // Hides default legend
-                      },
-                    },
-                  }}
-                />
-              </div>
-
-              {/* Fixed Legend Colors to Match Chart Order */}
-              <div className="grid grid-cols-3 gap-4 mt-3 text-xs text-white">
-                <div className="flex items-center space-x-2">
-                  <span className="w-4 h-4 bg-[#0A6A52] rounded-full"></span>
-                  <span>Cardiology</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="w-4 h-4 bg-[#A07089] rounded-full"></span>
-                  <span>Orthopedics</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="w-4 h-4 bg-[#178245] rounded-full"></span>
-                  <span>Neurology</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="w-4 h-4 bg-[#158F80] rounded-full"></span>
-                  <span>Oncology</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="w-4 h-4 bg-[#B24D85] rounded-full"></span>
-                  <span>Pediatrics</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
+      
 
       {/* Achievements Section */}
       <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
