@@ -15,6 +15,7 @@ async function connect() {
       console.log("Already connected to MongoDB");
       return;
     }
+    console.log(MONGODB_URI)
     await mongoose.connect(MONGODB_URI);
     console.log("Connected to MongoDB");
   } catch (error) {
