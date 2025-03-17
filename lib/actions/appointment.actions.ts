@@ -20,7 +20,7 @@ export interface CreateAppointmentParams {
     endTime: Date;
   };
   status: "pending" | "scheduled" | "cancelled";
-  note?: string;
+  isVirtual: boolean;
   cancellationReason?: string;
 }
 
@@ -54,13 +54,14 @@ export const createAppointment = async (params: CreateAppointmentParams) => {
         image: params.primaryPhysician.image || "",
       },
       reason: params.reason,
+      isVirtual: params.isVirtual ?? false,
       timeSlot: {
         startTime: startTime,
         endTime: endTime,
       },
-      status: params.status,
-      note: params.note || "",
+      status: params.status
     });
+    
 
     const savedAppointment = await newAppointment.save();
 
@@ -196,9 +197,9 @@ export const updateAppointment = async ({
       };
     }
 
-    // Handle reason and note if provided
+    // Handle reason and isVirtual if provided
     if (appointment.reason) updateFields.reason = appointment.reason;
-    if (appointment.note !== undefined) updateFields.note = appointment.note;
+    if (appointment.isVirtual !== undefined) updateFields.isVirtual = appointment.isVirtual;
 
     if (type === "cancel") {
       updateFields.status = "cancelled";
@@ -235,13 +236,12 @@ export const updateAppointment = async ({
       updatedAt: updatedAppointment.updatedAt.toISOString(),
     };
   } catch (error) {
-
     throw new Error(`Failed to update appointment: ${error.message}`);
   }
 };
 
 // Helper function to format date for display
-export const formatDateTime =async (dateString: string) => {
+export const formatDateTime = async (dateString: string) => {
   const date = new Date(dateString);
   return {
     date: date.toLocaleDateString('en-US', { 
@@ -332,5 +332,3 @@ export async function isTimeSlotBooked(
     );
   });
 }
-
-

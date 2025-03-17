@@ -188,7 +188,7 @@ export default function Home() {
         recognitionInstance.continuous = true
         recognitionInstance.interimResults = true
 
-        recognitionInstance.onresult = (event) => {
+        recognitionInstance.onresult = (event:any) => {
           const current = event.resultIndex
           const result = event.results[current]
           const transcriptText = result[0].transcript
@@ -200,7 +200,7 @@ export default function Home() {
           }
         }
 
-        recognitionInstance.onerror = (event) => {
+        recognitionInstance.onerror = (event:any) => {
           console.error("Speech recognition error", event.error)
           setIsListening(false)
         }
