@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/table"
 import { Button } from "../ui/button"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -28,12 +29,22 @@ export function DataTable<TData, TValue>({
   columns,
   data,
 }: DataTableProps<TData, TValue>) {
+  const router = useRouter();
+  
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
   })
+
+  const handleRowClick = (row: any) => {
+    // Assuming each row has a user/patient ID
+    const userId = row.original.id || row.original._id || row.original.userId;
+    if (userId) {
+      router.push(`admin/${userId}/patient-details/`);
+    }
+  };
 
   return (
     <div className="data-table remove-scrollbar">
@@ -50,7 +61,6 @@ export function DataTable<TData, TValue>({
                           header.column.columnDef.header,
                           header.getContext()
                         )}
-                        
                   </TableHead>
                 )
               })}
@@ -63,7 +73,8 @@ export function DataTable<TData, TValue>({
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() && "selected"}
-                className="shad-table-row text-center"
+                className="shad-table-row text-center cursor-pointer hover:bg-teal-950"
+                onClick={() => handleRowClick(row)}
               >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id} className="py-3">
@@ -89,13 +100,13 @@ export function DataTable<TData, TValue>({
           disabled={!table.getCanPreviousPage()}
           className="shad-gray-btn cursor-pointer"
         >
-         <Image
-         src='assets/icons/arrow.svg'
-         height={24}
-         width={24}
-         alt="arrow"
-         className="cursor-pointer "
-         />
+          <Image
+            src='assets/icons/arrow.svg'
+            height={24}
+            width={24}
+            alt="arrow"
+            className="cursor-pointer"
+          />
         </Button>
         <Button
           variant="outline"
@@ -104,15 +115,14 @@ export function DataTable<TData, TValue>({
           disabled={!table.getCanNextPage()}
           className="shad-gray-btn cursor-pointer"
         >
-         <Image
-         src='assets/icons/arrow.svg'
-         height={24}
-         width={24}
-         alt="arrow"
-         className="rotate-180 cursor-pointer"
-         />
+          <Image
+            src='assets/icons/arrow.svg'
+            height={24}
+            width={24}
+            alt="arrow"
+            className="rotate-180 cursor-pointer"
+          />
         </Button>
-        
       </div>
     </div>
   )

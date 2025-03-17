@@ -32,6 +32,17 @@ export const columns: ColumnDef<Appointment>[] = [
         )
     },
     {
+        accessorKey: "appointmentType",
+        header: "Type",
+        cell: ({ row }) => (
+            <div className="flex justify-center">
+                <span className={`px-5 py-2 rounded-md text-xs font-medium ${row.original.isVirtual ? "bg-cyan-950 text-white" : "bg-teal-900 text-white"}`}>
+                    {row.original.isVirtual ? "Virtual" : "In-Person"}
+                </span>
+            </div>
+        )
+    },
+    {
         accessorKey: "schedule",
         header: "Appointment",
         cell: ({ row }) => (
@@ -39,9 +50,7 @@ export const columns: ColumnDef<Appointment>[] = [
             {row.original?.timeSlot?.startTime 
               ? formatDateTime(row.original.timeSlot.startTime).dateTime 
               : "N/A"}
-
           </p>
-          
         )
     },
     {
@@ -70,27 +79,27 @@ export const columns: ColumnDef<Appointment>[] = [
             );
         },
     },    
-    {
-        id: "actions",
-        header: () => <div className="pl-4">Actions</div>,
-        cell: ({ row: { original: data } }) => {
-            return (
-                <div className="flex gap-3 justify-center sm:ml-5 ">
-                    {/* Pass all necessary data to the modal */}
-                    <AppointmentModal
-                        type='schedule'
-                        patientId={data.patient?._id}
-                        userId={data.userId}
-                        appointment={data}
-                    />
-                    <AppointmentModal
-                        type='cancel'
-                        patientId={data.patient?._id}
-                        userId={data.userId}
-                        appointment={data}
-                    />
-                </div>
-            )
-        }
-    },
+    // {
+    //     id: "actions",
+    //     header: () => <div className="pl-4">Actions</div>,
+    //     cell: ({ row: { original: data } }) => {
+    //         return (
+    //             <div className="flex gap-3 justify-center sm:ml-5 ">
+    //                 {/* Pass all necessary data to the modal */}
+    //                 <AppointmentModal
+    //                     type='schedule'
+    //                     patientId={data.patient?._id}
+    //                     userId={data.userId}
+    //                     appointment={data}
+    //                 />
+    //                 <AppointmentModal
+    //                     type='cancel'
+    //                     patientId={data.patient?._id}
+    //                     userId={data.userId}
+    //                     appointment={data}
+    //                 />
+    //             </div>
+    //         )
+    //     }
+    // },
 ]

@@ -1,7 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 
 // Define the Appointment Schema
-const appointmentSchema: Schema = new Schema(
+const appointmentSchema = new Schema(
   {
     userId: { type: String, required: true },
     patientId: { type: String, required: true },
@@ -24,7 +24,8 @@ const appointmentSchema: Schema = new Schema(
       enum: ["pending", "scheduled", "cancelled"],
       default: "pending",
     },
-    note: { type: String, default: "" },
+
+    isVirtual: { type: Boolean, required: true }, 
     cancellationReason: { type: String, default: "" },
   },
   { timestamps: true }
@@ -37,6 +38,7 @@ appointmentSchema.index({ patientId: 1 });
 appointmentSchema.index({ "primaryPhysician.id": 1 });
 appointmentSchema.index({ status: 1 });
 
-const Appointment = mongoose.models.Appointment || mongoose.model("Appointment", appointmentSchema);
+const Appointment =
+  mongoose.models.Appointment || mongoose.model("Appointment", appointmentSchema);
 
 export default Appointment;
