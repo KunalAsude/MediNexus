@@ -199,7 +199,29 @@ export const updateAppointment = async ({
 
     // Handle reason and isVirtual if provided
     if (appointment.reason) updateFields.reason = appointment.reason;
-    if (appointment.isVirtual !== undefined) updateFields.isVirtual = appointment.isVirtual;
+    
+    // Handle isVirtual and meetingLink
+    if (appointment.isVirtual !== undefined) {
+      updateFields.isVirtual = appointment.isVirtual;
+      
+      // If appointment is virtual, handle meetingLink
+      if (appointment.isVirtual === true) {
+        // Generate a meetingLink if not provided
+        if (appointment.meetingLink) {
+          updateFields.meetingLink = appointment.meetingLink;
+        } 
+        // else {
+        //   // Generate a random meeting ID if not provided
+        //   const meetingId = `med-${Math.random().toString(36).substring(2, 10)}`;
+        //   updateFields.meetingLink = `https://medinexus.com/meeting/${meetingId}`;
+        //   updateFields.meetingId = meetingId;
+        // }
+      } else {
+        // If not virtual, remove meetingLink and meetingId if they exist
+        updateFields.meetingLink = null;
+        updateFields.meetingId = null;
+      }
+    }
 
     if (type === "cancel") {
       updateFields.status = "cancelled";
@@ -207,12 +229,13 @@ export const updateAppointment = async ({
     } else {
       updateFields.status = appointment.status || "scheduled";
     }
-
-    // Use updateOne instead of findByIdAndUpdate for more reliable updates
+    
     const result = await Appointment.updateOne(
       { _id: appointmentId },
       { $set: updateFields }
     );
+
+    console.log(" Result --",result)
 
     if (result.matchedCount === 0) {
       throw new Error("Appointment not found");

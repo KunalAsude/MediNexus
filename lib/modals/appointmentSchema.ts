@@ -13,7 +13,6 @@ const appointmentSchema = new Schema(
     },
     reason: { type: String, required: true },
 
-    // Time slot structure with start and end times
     timeSlot: {
       startTime: { type: Date, required: true },
       endTime: { type: Date, required: true },
@@ -25,13 +24,15 @@ const appointmentSchema = new Schema(
       default: "pending",
     },
 
-    isVirtual: { type: Boolean, required: true }, 
+    isVirtual: { type: Boolean, required: true },
+
+    meetingLink: { type: String, default: "" },
+
     cancellationReason: { type: String, default: "" },
   },
   { timestamps: true }
 );
 
-// Index for optimized queries
 appointmentSchema.index({ "timeSlot.startTime": 1, "timeSlot.endTime": 1 });
 appointmentSchema.index({ userId: 1 });
 appointmentSchema.index({ patientId: 1 });
