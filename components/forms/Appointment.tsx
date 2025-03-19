@@ -372,7 +372,7 @@ const AppointmentForm = ({ userId, patientId, patientName, type, appointment, se
             reason: values.reason || appointment.reason,
             timeSlot: timeSlotToUse,
             status,
-            isVirtual: appointmentType, // Add this line to include the appointment type
+            isVirtual: appointmentType,
             ...(type === "cancel" && {
               cancellationReason: values.cancellationReason,
             }),
