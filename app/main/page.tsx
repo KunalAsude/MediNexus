@@ -22,7 +22,8 @@ import {
   Linkedin,
   Instagram,
   Mail,
-  Heart,
+  User,
+  ChevronDown,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useEffect, useState, useRef } from "react"
@@ -32,8 +33,6 @@ import { setSelectedHospital } from "@/redux/slice/hospitalSlice"
 import { useRouter } from "next/navigation"
 import { getAllHospitals } from "@/lib/actions/patient.actions"
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js"
-import { LineChart } from "@/components/ui/LineChart"
-import { Doughnut } from "react-chartjs-2"
 import { Mic, MicOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -162,12 +161,16 @@ export default function Home() {
   const dispatch = useDispatch()
   const router = useRouter()
   const heroRef = useRef<HTMLDivElement>(null)
+  const userMenuRef = useRef<HTMLDivElement>(null)
 
   const [stats, setStats] = useState({ hospitals: 0, patients: 0, rating: 0 })
   const [isListening, setIsListening] = useState(false)
   const [recognition, setRecognition] = useState<any>(null)
   const [voiceInput, setVoiceInput] = useState("")
   const [isScrolled, setIsScrolled] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [showUserMenu, setShowUserMenu] = useState(false)
+  const [userData, setUserData] = useState(null)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -176,6 +179,31 @@ export default function Home() {
 
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
+
+  const handleLogout = () => {
+    localStorage.removeItem("authToken")
+    localStorage.removeItem("userDetails")
+    setIsLoggedIn(false)
+    setShowUserMenu(false)
+    setUserData(null)
+    // Optional: redirect to login page
+    // router.push('/login');
+  }
+
+  useEffect(() => {
+    const token = localStorage.getItem("authToken")
+    const storedUserData = localStorage.getItem("userDetails")
+
+    if (token && storedUserData) {
+      setIsLoggedIn(true)
+      try {
+        const parsedUserData = JSON.parse(storedUserData)
+        setUserData(parsedUserData)
+      } catch (error) {
+        console.error("Failed to parse user data from localStorage", error)
+      }
+    }
   }, [])
 
   useEffect(() => {
@@ -188,7 +216,7 @@ export default function Home() {
         recognitionInstance.continuous = true
         recognitionInstance.interimResults = true
 
-        recognitionInstance.onresult = (event:any) => {
+        recognitionInstance.onresult = (event: any) => {
           const current = event.resultIndex
           const result = event.results[current]
           const transcriptText = result[0].transcript
@@ -200,7 +228,7 @@ export default function Home() {
           }
         }
 
-        recognitionInstance.onerror = (event:any) => {
+        recognitionInstance.onerror = (event: any) => {
           console.error("Speech recognition error", event.error)
           setIsListening(false)
         }
@@ -266,6 +294,19 @@ export default function Home() {
     document.getElementById("hospitals")?.scrollIntoView({ behavior: "smooth" })
   }
 
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [])
+
   return (
     <div className="min-h-screen font-sans antialiased no-scrollbar overflow-x-hidden">
       <style jsx global>
@@ -274,47 +315,129 @@ export default function Home() {
 
       {/* Header */}
       <header className="admin-header mb-4 flex justify-between items-center px-6 py-4 bg-teal-900/50">
-                <Link href="/" className="cursor-pointer">
-                    <div className="flex items-center space-x-2">
-                        <img src="https://img.icons8.com/arcade/64/hospital.png" alt="MediNexus Logo" className="h-10 w-10" />
-                        <div className="text-lg font-bold text-teal-400">MediNexus</div>
-                    </div>
-                </Link>
+        <Link href="/" className="cursor-pointer">
+          <div className="flex items-center space-x-2">
+            <img src="https://img.icons8.com/arcade/64/hospital.png" alt="MediNexus Logo" className="h-10 w-10" />
+            <div className="text-lg font-bold text-teal-400">MediNexus</div>
+          </div>
+        </Link>
 
-                <nav className="flex items-center space-x-6">
-                    <button
-                        onClick={() => {
-                            if (recognition) {
-                                if (isListening) {
-                                    recognition.stop()
-                                    setIsListening(false)
-                                } else {
-                                    recognition.start()
-                                    setIsListening(true)
-                                }
-                            }
-                        }}
-                        className={`p-2 rounded-full ${isListening ? "bg-red-500/20 text-red-400" : "bg-cyan-900 hover:bg-teal-800/50"} transition-colors`}
-                        aria-label={isListening ? "Stop listening" : "Start voice assistant"}
+        <nav className="flex items-center space-x-6">
+          <button
+            onClick={() => {
+              if (recognition) {
+                if (isListening) {
+                  recognition.stop()
+                  setIsListening(false)
+                } else {
+                  recognition.start()
+                  setIsListening(true)
+                }
+              }
+            }}
+            className={`p-2 rounded-full ${isListening ? "bg-red-500/20 text-red-400" : "bg-cyan-900 hover:bg-teal-800/50"} transition-colors`}
+            aria-label={isListening ? "Stop listening" : "Start voice assistant"}
+          >
+            {isListening ? <MicOff size={20} className="text-red-400" /> : <Mic size={20} className="text-teal-300" />}
+          </button>
+          {isListening && <div className="hidden md:block text-sm italic text-teal-300">Listening...</div>}
+          <a href="#services" className="hidden md:inline text-teal-300 hover:text-teal-400 transition-colors">
+            Services
+          </a>
+          <a href="#hospitals" className="hidden md:inline text-teal-300 hover:text-teal-400 transition-colors">
+            Hospitals
+          </a>
+          <button
+            onClick={handleStoreClick}
+            className="hidden md:inline bg-teal-700 hover:bg-teal-800 text-white px-4 py-2 rounded-lg transition-colors"
+          >
+            Medical Store
+          </button>
+          {isLoggedIn ? (
+            <div className="relative" ref={userMenuRef}>
+              <button
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                className="flex items-center space-x-1 text-teal-300 hover:text-teal-400"
+                aria-expanded={showUserMenu}
+                aria-haspopup="true"
+              >
+                <div className="w-8 h-8 rounded-full bg-teal-700 flex items-center justify-center overflow-hidden">
+                  {userData?.profileImage ? (
+                    <img
+                      src={userData.profileImage || "/placeholder.svg"}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <User size={16} className="text-teal-300" />
+                  )}
+                </div>
+                <span className="hidden md:inline">{userData?.name || "Account"}</span>
+                <ChevronDown size={16} className={`transition-transform ${showUserMenu ? "rotate-180" : ""}`} />
+              </button>
+              {showUserMenu && (
+                <div className="absolute right-0 mt-2 w-56 bg-teal-900 rounded-md shadow-lg py-1 z-10 border border-teal-700">
+                  <div className="px-4 py-3 border-b border-teal-700">
+                    <p className="text-sm text-teal-300 font-medium">{userData?.name || "User"}</p>
+                    <p className="text-xs text-teal-400 truncate">{userData?.email || ""}</p>
+                  </div>
+                  <a
+                    href="/patient-profile"
+                    className="block px-4 py-2 text-sm text-teal-300 hover:bg-teal-800 flex items-center"
+                  >
+                    <User size={16} className="mr-2" />
+                    Profile
+                  </a>
+                  <a
+                    href="/patient-profile"
+                    className="block px-4 py-2 text-sm text-teal-300 hover:bg-teal-800 flex items-center"
+                  >
+                    <Activity size={16} className="mr-2" />
+                    Medical History
+                  </a>
+                  <a
+                    href="/patient-profile"
+                    className="block px-4 py-2 text-sm text-teal-300 hover:bg-teal-800 flex items-center"
+                  >
+                    <Clock size={16} className="mr-2" />
+                    Appointments
+                  </a>
+                  <button
+                    onClick={handleLogout}
+                    className="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-teal-800 flex items-center"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="mr-2"
                     >
-                        {isListening ? <MicOff size={20} className="text-red-400" /> : <Mic size={20} className="text-teal-300" />}
-                    </button>
-                    {isListening && <div className="hidden md:block text-sm italic text-teal-300">Listening...</div>}
-                    <a href="#services" className="hidden md:inline text-teal-300 hover:text-teal-400 transition-colors">
-                        Services
-                    </a>
-                    <a href="#hospitals" className="hidden md:inline text-teal-300 hover:text-teal-400 transition-colors">
-                        Hospitals
-                    </a>
-                    <button
-                        onClick={handleStoreClick}
-                        className="hidden md:inline bg-teal-700 hover:bg-teal-800 text-white px-4 py-2 rounded-lg transition-colors"
-                    >
-                        Medical Store
-                    </button>
-                </nav>
-            </header>
-
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                      <polyline points="16 17 21 12 16 7"></polyline>
+                      <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <a
+              href="/login"
+              className="hidden md:flex items-center space-x-1 text-teal-300 hover:text-teal-400 transition-colors"
+            >
+              <User size={20} />
+              <span>Login</span>
+            </a>
+          )}
+        </nav>
+      </header>
 
       {/* Hero Section */}
       <div className="bg-teal-900/30 pt-28 pb-16 px-4 sm:px-6 lg:px-8 m-3 rounded-lg">
@@ -406,8 +529,6 @@ export default function Home() {
           </CardContent>
         </Card>
       </section>
-
-      
 
       {/* Achievements Section */}
       <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
@@ -547,145 +668,159 @@ export default function Home() {
 
       {/* Footer */}
       <footer className=" text-zinc-600 dark:text-zinc-400 pt-16 pb-8 mt-auto border-t border-t-gray-900">
-      <div className="max-w-7xl mx-auto px-4">
-        {/* Top Section with Logo and Newsletter */}
-        <div className="flex flex-col md:flex-row items-center justify-between mb-16 gap-8">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <img
-                src="https://img.icons8.com/arcade/64/hospital.png"
-                alt="MediNexus Logo"
-                className="h-12 w-12 relative z-10"
-              />
-              <div className="absolute -inset-1 bg-teal-100 dark:bg-teal-900/30 rounded-lg blur-sm" />
+        <div className="max-w-7xl mx-auto px-4">
+          {/* Top Section with Logo and Newsletter */}
+          <div className="flex flex-col md:flex-row items-center justify-between mb-16 gap-8">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <img
+                  src="https://img.icons8.com/arcade/64/hospital.png"
+                  alt="MediNexus Logo"
+                  className="h-12 w-12 relative z-10"
+                />
+                <div className="absolute -inset-1 bg-teal-100 dark:bg-teal-900/30 rounded-lg blur-sm" />
+              </div>
+              <span className="text-2xl font-bold text-zinc-800 dark:text-white">MediNexus</span>
             </div>
-            <span className="text-2xl font-bold text-zinc-800 dark:text-white">
-              MediNexus
-            </span>
-          </div>
-          
-          <div className="max-w-md w-full">
-            <h4 className="text-zinc-800 dark:text-white font-semibold mb-3 text-left">Join Our Newsletter</h4>
-            <form  className="flex gap-2">
-              <Input
-                type="email"
-                placeholder="Enter your email"
-                className=" border-gray-900"
-                // value={email}
-                // onChange={(e) => setEmail(e.target.value)}
-              />
-              <Button type="submit" variant="outline" className="border-teal-500 text-teal-500 hover:bg-teal-500 hover:text-white transition-colors">
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </form>
-          </div>
-        </div>
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16 text-left">
-          <div>
-            <h4 className="text-zinc-800 dark:text-white font-semibold mb-6">Quick Links</h4>
-            <ul className="space-y-4">
-              <li>
-                <a href="#" className="hover:text-teal-500 transition-colors flex items-center gap-2 group">
-                  <span className="h-px w-4 bg-teal-500 group-hover:w-6 transition-all"></span>
-                  Home
-                </a>
-              </li>
-              <li>
-                <a href="#services" className="hover:text-teal-500 transition-colors flex items-center gap-2 group">
-                  <span className="h-px w-4 bg-teal-500 group-hover:w-6 transition-all"></span>
-                  Services
-                </a>
-              </li>
-              <li>
-                <a href="#hospitals" className="hover:text-teal-500 transition-colors flex items-center gap-2 group">
-                  <span className="h-px w-4 bg-teal-500 group-hover:w-6 transition-all"></span>
-                  Hospitals
-                </a>
-              </li>
-              <li>
-                <a href="#doctors" className="hover:text-teal-500 transition-colors flex items-center gap-2 group">
-                  <span className="h-px w-4 bg-teal-500 group-hover:w-6 transition-all"></span>
-                  Find a Doctor
-                </a>
-              </li>
-            </ul>
-          </div>
-          
-          <div>
-            <h4 className="text-zinc-800 dark:text-white font-semibold mb-6">Contact</h4>
-            <ul className="space-y-4">
-              <li className="flex items-center gap-2 hover:text-teal-500 transition-colors group cursor-pointer">
-                <Mail className="h-4 w-4 text-teal-500" />
-                support@medinexus.com
-              </li>
-              <li className="flex items-center gap-2 hover:text-teal-500 transition-colors group cursor-pointer">
-                <Phone className="h-4 w-4 text-teal-500" />
-                +91 1234567890
-              </li>
-              <li className="flex items-center gap-2 hover:text-teal-500 transition-colors group cursor-pointer">
-                <MapPin className="h-4 w-4 text-teal-500" />
-                New Delhi, India
-              </li>
-            </ul>
-          </div>
-          
-          <div>
-            <h4 className="text-zinc-800 dark:text-white font-semibold mb-6">Legal</h4>
-            <ul className="space-y-4">
-              <li>
-                <a href="#" className="hover:text-teal-500 transition-colors flex items-center gap-2 group">
-                  <span className="h-px w-4 bg-teal-500 group-hover:w-6 transition-all"></span>
-                  Privacy Policy
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-teal-500 transition-colors flex items-center gap-2 group">
-                  <span className="h-px w-4 bg-teal-500 group-hover:w-6 transition-all"></span>
-                  Terms of Service
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-teal-500 transition-colors flex items-center gap-2 group">
-                  <span className="h-px w-4 bg-teal-500 group-hover:w-6 transition-all"></span>
-                  Cookie Policy
-                </a>
-              </li>
-            </ul>
-          </div>
-          
-          <div>
-            <h4 className="text-zinc-800 dark:text-white font-semibold mb-6">Connect With Us</h4>
-            <div className="flex gap-3">
-              <a href="#" className="p-2 rounded-lg border border-gray-900 hover:border-teal-500 hover:text-teal-500 transition-colors">
-                <Facebook className="h-5 w-5" />
-              </a>
-              <a href="#" className="p-2 rounded-lg border border-gray-900 hover:border-teal-500 hover:text-teal-500 transition-colors">
-                <Twitter className="h-5 w-5" />
-              </a>
-              <a href="#" className="p-2 rounded-lg border border-gray-900 hover:border-teal-500 hover:text-teal-500 transition-colors">
-                <Linkedin className="h-5 w-5" />
-              </a>
-              <a href="#" className="p-2 rounded-lg border border-gray-900 hover:border-teal-500 hover:text-teal-500 transition-colors">
-                <Instagram className="h-5 w-5" />
-              </a>
-            </div>
-            <div className="mt-8 p-4  rounded-lg border border-gray-900 ">
-              <h5 className="text-zinc-800 dark:text-white font-semibold mb-2">24/7 Emergency</h5>
-              <p className="text-2xl font-bold text-teal-500">1800-MED-HELP</p>
+            <div className="max-w-md w-full">
+              <h4 className="text-zinc-800 dark:text-white font-semibold mb-3 text-left">Join Our Newsletter</h4>
+              <form className="flex gap-2">
+                <Input
+                  type="email"
+                  placeholder="Enter your email"
+                  className=" border-gray-900"
+                  // value={email}
+                  // onChange={(e) => setEmail(e.target.value)}
+                />
+                <Button
+                  type="submit"
+                  variant="outline"
+                  className="border-teal-500 text-teal-500 hover:bg-teal-500 hover:text-white transition-colors"
+                >
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </form>
             </div>
           </div>
-        </div>
 
-        {/* Bottom Bar */}
-        <div className="pt-8 border-t border-t-gray-900 text-center">
-          <div className="flex items-center justify-center gap-1 text-sm">
-            © {new Date().getFullYear()} MediNexus.
+          {/* Main Content Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16 text-left">
+            <div>
+              <h4 className="text-zinc-800 dark:text-white font-semibold mb-6">Quick Links</h4>
+              <ul className="space-y-4">
+                <li>
+                  <a href="#" className="hover:text-teal-500 transition-colors flex items-center gap-2 group">
+                    <span className="h-px w-4 bg-teal-500 group-hover:w-6 transition-all"></span>
+                    Home
+                  </a>
+                </li>
+                <li>
+                  <a href="#services" className="hover:text-teal-500 transition-colors flex items-center gap-2 group">
+                    <span className="h-px w-4 bg-teal-500 group-hover:w-6 transition-all"></span>
+                    Services
+                  </a>
+                </li>
+                <li>
+                  <a href="#hospitals" className="hover:text-teal-500 transition-colors flex items-center gap-2 group">
+                    <span className="h-px w-4 bg-teal-500 group-hover:w-6 transition-all"></span>
+                    Hospitals
+                  </a>
+                </li>
+                <li>
+                  <a href="#doctors" className="hover:text-teal-500 transition-colors flex items-center gap-2 group">
+                    <span className="h-px w-4 bg-teal-500 group-hover:w-6 transition-all"></span>
+                    Find a Doctor
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-zinc-800 dark:text-white font-semibold mb-6">Contact</h4>
+              <ul className="space-y-4">
+                <li className="flex items-center gap-2 hover:text-teal-500 transition-colors group cursor-pointer">
+                  <Mail className="h-4 w-4 text-teal-500" />
+                  support@medinexus.com
+                </li>
+                <li className="flex items-center gap-2 hover:text-teal-500 transition-colors group cursor-pointer">
+                  <Phone className="h-4 w-4 text-teal-500" />
+                  +91 1234567890
+                </li>
+                <li className="flex items-center gap-2 hover:text-teal-500 transition-colors group cursor-pointer">
+                  <MapPin className="h-4 w-4 text-teal-500" />
+                  New Delhi, India
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-zinc-800 dark:text-white font-semibold mb-6">Legal</h4>
+              <ul className="space-y-4">
+                <li>
+                  <a href="#" className="hover:text-teal-500 transition-colors flex items-center gap-2 group">
+                    <span className="h-px w-4 bg-teal-500 group-hover:w-6 transition-all"></span>
+                    Privacy Policy
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-teal-500 transition-colors flex items-center gap-2 group">
+                    <span className="h-px w-4 bg-teal-500 group-hover:w-6 transition-all"></span>
+                    Terms of Service
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-teal-500 transition-colors flex items-center gap-2 group">
+                    <span className="h-px w-4 bg-teal-500 group-hover:w-6 transition-all"></span>
+                    Cookie Policy
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-zinc-800 dark:text-white font-semibold mb-6">Connect With Us</h4>
+              <div className="flex gap-3">
+                <a
+                  href="#"
+                  className="p-2 rounded-lg border border-gray-900 hover:border-teal-500 hover:text-teal-500 transition-colors"
+                >
+                  <Facebook className="h-5 w-5" />
+                </a>
+                <a
+                  href="#"
+                  className="p-2 rounded-lg border border-gray-900 hover:border-teal-500 hover:text-teal-500 transition-colors"
+                >
+                  <Twitter className="h-5 w-5" />
+                </a>
+                <a
+                  href="#"
+                  className="p-2 rounded-lg border border-gray-900 hover:border-teal-500 hover:text-teal-500 transition-colors"
+                >
+                  <Linkedin className="h-5 w-5" />
+                </a>
+                <a
+                  href="#"
+                  className="p-2 rounded-lg border border-gray-900 hover:border-teal-500 hover:text-teal-500 transition-colors"
+                >
+                  <Instagram className="h-5 w-5" />
+                </a>
+              </div>
+              <div className="mt-8 p-4  rounded-lg border border-gray-900 ">
+                <h5 className="text-zinc-800 dark:text-white font-semibold mb-2">24/7 Emergency</h5>
+                <p className="text-2xl font-bold text-teal-500">1800-MED-HELP</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Bar */}
+          <div className="pt-8 border-t border-t-gray-900 text-center">
+            <div className="flex items-center justify-center gap-1 text-sm">
+              © {new Date().getFullYear()} MediNexus.
+            </div>
           </div>
         </div>
-      </div>
-    </footer>
+      </footer>
     </div>
   )
 }
