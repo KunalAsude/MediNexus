@@ -1,0 +1,12 @@
+name: Hourly Appointment Reminders
+
+on:
+  schedule:
+    - cron: '0 * * * *'  
+
+jobs:
+  send-reminders:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger API
+        run: curl -X GET https://medi-nexus.vercel.app/api/reminders
