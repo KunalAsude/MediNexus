@@ -41,7 +41,9 @@ export const AppointmentEmail: React.FC<AppointmentEmailProps> = ({
     day: 'numeric',
     hour: 'numeric',
     minute: '2-digit',
+    timeZone: 'Asia/Kolkata', 
   });
+  
   
   // Color theme
   const colors = {
