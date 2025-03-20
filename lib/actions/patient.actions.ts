@@ -265,3 +265,16 @@ export const getDoctorById = async (doctorId: object) => {
   }
 };
 
+export const getAllDoctors = async () => {
+  try {
+    await connect();
+    
+    const doctors = await doctorModal.find({}).lean(); 
+    
+    return JSON.parse(JSON.stringify(doctors)); 
+  } catch (error) {
+    console.error("Error fetching all doctors:", error);
+    throw new Error("Failed to fetch doctors from database");
+  }
+};
+
