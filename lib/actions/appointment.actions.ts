@@ -355,3 +355,95 @@ export async function isTimeSlotBooked(
     );
   });
 }
+
+export const getUserAppointments = async (userId: string) => {
+  try {
+    await connect();
+    
+    if (!userId) {
+      console.error("No user ID provided");
+      throw new Error("User ID is required");
+    }
+
+    const appointments = await Appointment.find({ userId }).sort({ 'timeSlot.startTime': -1 }).lean();
+    
+    if (!appointments || appointments.length === 0) {
+      return { 
+        totalCount: 0, 
+        scheduledCount: 0, 
+        pendingCount: 0, 
+        cancelledCount: 0, 
+        documents: [] 
+      };
+    }
+
+    // Format dates in each appointment
+    const formattedAppointments = appointments.map(appointment => ({
+      ...appointment,
+      _id: appointment._id.toString(),
+      timeSlot: {
+        startTime: new Date(appointment.timeSlot.startTime).toISOString(),
+        endTime: new Date(appointment.timeSlot.endTime).toISOString(),
+      },
+      createdAt: new Date(appointment.createdAt).toISOString(),
+      updatedAt: new Date(appointment.updatedAt).toISOString(),
+    }));
+
+    // Count different statuses
+    const counts = formattedAppointments.reduce(
+      (acc, appointment) => {
+        if (appointment.status === "scheduled") acc.scheduledCount += 1;
+        else if (appointment.status === "pending") acc.pendingCount += 1;
+        else if (appointment.status === "cancelled") acc.cancelledCount += 1;
+        return acc;
+      },
+      { scheduledCount: 0, pendingCount: 0, cancelledCount: 0 }
+    );
+
+    return { 
+      totalCount: formattedAppointments.length, 
+      ...counts, 
+      documents: formattedAppointments 
+    };
+  } catch (error) {
+    console.error("Error fetching user appointments:", error);
+    throw new Error(`Failed to fetch user appointments: ${error.message}`);
+  }
+};
+
+
+export async function cancelAppointment(appointmentId: string, reason: string) {
+  try {
+ 
+    await connect();
+    
+ 
+    if (!appointmentId) {
+      throw new Error("Appointment ID is required");
+    }
+    
+
+    const result = await Appointment.updateOne(
+      { _id: appointmentId },
+      { 
+        $set: {
+          status: "cancelled",
+          cancellationReason: reason || "Not provided"
+        } 
+      }
+    );
+    
+    if (result.matchedCount === 0) {
+      throw new Error("Appointment not found");
+    }
+    
+    if (result.modifiedCount === 0) {
+      throw new Error("Failed to cancel appointment");
+    }
+    
+    return { success: true, message: "Appointment cancelled successfully" };
+  } catch (error) {
+    console.error("Error cancelling appointment:", error);
+    throw new Error(`Failed to cancel appointment: ${error.message}`);
+  }
+}

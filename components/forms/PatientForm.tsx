@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Form } from "@/components/ui/form"
 import CustomFormField from "../customFormField"
 import SubmitButton from "../SubmitButton"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { UserFormValidation } from "@/lib/Validation"
 import { useRouter } from "next/navigation"
 import { createUser, getRegisteredPatient } from "@/lib/actions/patient.actions"
@@ -23,10 +23,9 @@ export enum FormFieldTypes {
   SKELETON = "skeleton",
 }
 
-
-
 const PatientForm = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingStorage, setIsCheckingStorage] = useState(true);
   const router = useRouter();
 
   const form = useForm<z.infer<typeof UserFormValidation>>({
@@ -37,6 +36,40 @@ const PatientForm = () => {
       phone: "",
     },
   });
+
+  // Check localStorage for existing user data on component mount
+  useEffect(() => {
+    const checkExistingUser = async () => {
+      try {
+        const authToken = localStorage.getItem('authToken');
+        const userDetails = localStorage.getItem('userDetails');
+        
+        if (authToken && userDetails) {
+          const user = JSON.parse(userDetails);
+          
+          // Check if the user is already registered
+          const registeredPatient = await getRegisteredPatient(user.id);
+          
+          if (registeredPatient) {
+            toast({
+              title: "Welcome Back!",
+              description: "Redirecting to your appointment page...",
+            });
+            router.push(`/patients/${user.id}/new-appointment`);
+          } else {
+            router.push(`/patients/${user.id}/register`);
+          }
+          return;
+        }
+      } catch (error) {
+        console.error("Error checking existing user:", error);
+      } finally {
+        setIsCheckingStorage(false);
+      }
+    };
+    
+    checkExistingUser();
+  }, [router]);
 
   const onSubmit = async (values: z.infer<typeof UserFormValidation>) => {
     setIsLoading(true);
@@ -60,6 +93,15 @@ const PatientForm = () => {
         return;
       }
 
+      // Save user details to localStorage
+      localStorage.setItem('authToken', newUser._id);
+      localStorage.setItem('userDetails', JSON.stringify({
+        id: newUser._id,
+        name: values.name,
+        email: values.email,
+        phone: values.phone,
+      }));
+
       const registeredPatient = await getRegisteredPatient(newUser._id);
 
       if (registeredPatient) {
@@ -82,6 +124,16 @@ const PatientForm = () => {
       setIsLoading(false);
     }
   }
+
+  // Don't render the form while checking localStorage
+  if (isCheckingStorage) {
+    return (
+      <div className="flex flex-col items-center justify-center space-y-4">
+        <p className="text-dark-700">Checking your information...</p>
+      </div>
+    );
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 flex-1">
