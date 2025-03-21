@@ -192,17 +192,37 @@ export default function Home() {
   }
 
   useEffect(() => {
-    const token = localStorage.getItem("authToken")
-    const storedUserData = localStorage.getItem("userDetails")
+    const checkLoginStatus = () => {
+      const token = localStorage.getItem("authToken")
+      const storedUserData = localStorage.getItem("userDetails")
 
-    if (token && storedUserData) {
-      setIsLoggedIn(true)
-      try {
-        const parsedUserData = JSON.parse(storedUserData)
-        setUserData(parsedUserData)
-      } catch (error) {
-        console.error("Failed to parse user data from localStorage", error)
+      if (token && storedUserData) {
+        try {
+          const parsedUserData = JSON.parse(storedUserData)
+          setIsLoggedIn(true)
+          setUserData(parsedUserData)
+        } catch (error) {
+          console.error("Failed to parse user data from localStorage", error)
+          // If parse fails, clear the invalid data
+          localStorage.removeItem("userDetails")
+          setIsLoggedIn(false)
+          setUserData(null)
+        }
+      } else {
+        // If either token or userData is missing, set not logged in
+        setIsLoggedIn(false)
+        setUserData(null)
       }
+    }
+
+    // Check on initial load
+    checkLoginStatus()
+
+    // Add event listener for storage changes (if user logs in/out in another tab)
+    window.addEventListener("storage", checkLoginStatus)
+
+    return () => {
+      window.removeEventListener("storage", checkLoginStatus)
     }
   }, [])
 
@@ -382,21 +402,21 @@ export default function Home() {
                     <p className="text-xs text-teal-400 truncate">{userData?.email || ""}</p>
                   </div>
                   <a
-                    href="/patient-profile"
+                    href={`/patient-profile/${userData?.id}`}
                     className="block px-4 py-2 text-sm text-teal-300 hover:bg-teal-800 flex items-center"
                   >
                     <User size={16} className="mr-2" />
                     Profile
                   </a>
                   <a
-                    href="/patient-profile"
+                    href={`/patient-profile/${userData?.id}`}
                     className="block px-4 py-2 text-sm text-teal-300 hover:bg-teal-800 flex items-center"
                   >
                     <Activity size={16} className="mr-2" />
                     Medical History
                   </a>
                   <a
-                    href="/patient-profile"
+                    href={`/patient-profile/${userData?.id}`}
                     className="block px-4 py-2 text-sm text-teal-300 hover:bg-teal-800 flex items-center"
                   >
                     <Clock size={16} className="mr-2" />
@@ -430,10 +450,10 @@ export default function Home() {
           ) : (
             <a
               href="/login"
-              className="hidden md:flex items-center space-x-1 text-teal-300 hover:text-teal-400 transition-colors"
+              className="flex items-center space-x-1 text-teal-300 hover:text-teal-400 transition-colors"
             >
               <User size={20} />
-              <span>Login</span>
+              <span className="hidden md:inline">Login</span>
             </a>
           )}
         </nav>
@@ -690,8 +710,8 @@ export default function Home() {
                   type="email"
                   placeholder="Enter your email"
                   className=" border-gray-900"
-                  // value={email}
-                  // onChange={(e) => setEmail(e.target.value)}
+                // value={email}
+                // onChange={(e) => setEmail(e.target.value)}
                 />
                 <Button
                   type="submit"
