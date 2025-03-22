@@ -135,7 +135,7 @@ export const AppointmentEmail: React.FC<AppointmentEmailProps> = ({
 
                 {!isDoctor && (
                   <Section style={styles.buttonContainer}>
-                    <Button style={styles.button} href="https://medinexus.example/appointments">
+                    <Button style={styles.button} href="https://medinexus.in">
                       Manage Appointment
                     </Button>
                   </Section>
@@ -176,7 +176,7 @@ export const AppointmentEmail: React.FC<AppointmentEmailProps> = ({
 
                 {!isDoctor && (
                   <Section style={styles.buttonContainer}>
-                    <Button style={{...styles.button, backgroundColor: colors.primary}} href="https://medinexus.example/book">
+                    <Button style={{...styles.button, backgroundColor: colors.primary}} href="https://medinexus.in">
                       Book New Appointment
                     </Button>
                   </Section>
@@ -197,7 +197,7 @@ export const AppointmentEmail: React.FC<AppointmentEmailProps> = ({
                   📞 <Link href="tel:+15551234567" style={styles.link}>+1 (555) 123-4567</Link>
                 </Text>
                 <Text style={styles.contactInfo}>
-                  ✉️ <Link href="mailto:support@medinexus.com" style={styles.link}>support@medinexus.com</Link>
+                  ✉️ <Link href="mailto:support@medinexus.in" style={styles.link}>support@medinexus.in</Link>
                 </Text>
               </>
             )}

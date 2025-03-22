@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import { revalidatePath } from "next/cache";
 import connect from "../mongodb";
 import Appointment from "../modals/appointmentSchema";
+import Prescription from "../modals/prescriptionSchema";
 
 export interface CreateAppointmentParams {
   userId: string;
@@ -447,3 +448,75 @@ export async function cancelAppointment(appointmentId: string, reason: string) {
     throw new Error(`Failed to cancel appointment: ${error.message}`);
   }
 }
+
+export async function setPatientPrescription(prescriptionData) {
+  try {
+    // Connect to MongoDB
+    await connect();
+    
+    // Validate the data before saving
+    if (!prescriptionData.patientId || !prescriptionData.patientName || !prescriptionData.doctorId) {
+      throw new Error("Missing required prescription fields");
+    }
+    
+    // Create and save the prescription
+    const newPrescription = new Prescription(prescriptionData);
+    const savedPrescription = await newPrescription.save();
+
+    // Return a proper response
+    return {
+      ok: true,
+      message: "Prescription saved successfully",
+      data: savedPrescription.toJSON(),
+    };
+  } catch (error) {
+    console.error("Server action error:", error);
+    
+    // Return a structured error response
+    return {
+      ok: false,
+      message: "Failed to save prescription",
+      error: error.message,
+    };
+  }
+}
+
+
+export const getPrescription = async (prescriptionId) => {
+  try {
+    await connect(); 
+
+    const prescription = await Prescription.findById(prescriptionId).lean();
+    console.log(prescription)
+    if (!prescription) {
+      console.log("No prescription found for this ID");
+      return { success: false, message: "No prescription found" };
+    }
+
+    return { success: true, data: prescription };
+
+  } catch (error) {
+    console.error("Error fetching prescription:", error);
+    return { success: false, message: "Failed to fetch prescription", error: error.message };
+  }
+};
+
+export const getPrescriptionByAppointmentId = async (appointmentId: string) => {
+  try {
+    await connect(); 
+
+    const prescription = await Prescription.findOne({ appointmentId }).lean();
+    console.log(prescription);
+    
+    if (!prescription) {
+      console.log("No prescription found for this appointment ID");
+      return { success: false, message: "No prescription found" };
+    }
+
+    return { success: true, data: prescription };
+
+  } catch (error) {
+    console.error("Error fetching prescription by appointment ID:", error);
+    return { success: false, message: "Failed to fetch prescription", error: error.message };
+  }
+};

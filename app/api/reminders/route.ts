@@ -1,30 +1,34 @@
-// app/api/reminders/route.ts
-import connect from "@/lib/mongodb";
-import { sendReminderEmails } from "@/lib/actions/sendEmails";
+// pages/api/reminders.ts
+import { sendReminderEmails } from '@/lib/actions/sendEmails';
+import { NextApiRequest, NextApiResponse } from 'next';
 
-export async function GET() {
-  await connect();
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  // Only allow GET requests
+  if (req.method !== 'GET') {
+    return res.status(405).json({ success: false, message: 'Method not allowed' });
+  }
+  
+  // Validate API key
+  const authHeader = req.headers.authorization;
+  if (!authHeader || authHeader !== process.env.REMINDER_API_TOKEN) {
+    console.error('Invalid or missing API token');
+    return res.status(401).json({ success: false, message: 'Unauthorized' });
+  }
   
   try {
-    const reminderResults = await sendReminderEmails();
+    // Process reminders
+    const result = await sendReminderEmails();
     
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: `Reminder process complete. Sent ${reminderResults.sentCount} reminders.`,
-        details: reminderResults
-      }),
-      { status: 200 }
-    );
+    // Log results
+    console.log(`Reminder processing complete: ${result.message}`);
+    
+    return res.status(200).json(result);
   } catch (error) {
-    console.error("Error in reminder process:", error);
-    return new Response(
-      JSON.stringify({
-        success: false,
-        message: "Failed to process reminders",
-        error: error instanceof Error ? error.message : String(error)
-      }),
-      { status: 500 }
-    );
+    console.error('Error in reminder API:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Server error processing reminders',
+      error: error instanceof Error ? error.message : String(error)
+    });
   }
 }

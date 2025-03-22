@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { useSelector } from "react-redux"
 import { Badge } from "@/components/ui/badge"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import Link from "next/link"
 
 export default function NewAppointment({ params }: { params: { userId: string } }) {
   const [searchTerm, setSearchTerm] = useState("")
@@ -113,6 +114,7 @@ export default function NewAppointment({ params }: { params: { userId: string } 
       {/* Sidebar - Doctor List */}
       <div className="hidden lg:block w-full lg:w-2/5 xl:w-1/3 p-4 sm:p-6 overflow-y-auto bg-[linear-gradient(to_right,#042F2E)] remove-scrollbar border-b lg:border-b-0 lg:border-r border-teal-900/30">
         <div className="mb-7">
+          <Link href={"/dashboard"} >
           <div className="flex items-center mb-5 sm:mb-7">
             <img
               src="https://img.icons8.com/arcade/64/hospital.png"
@@ -121,6 +123,7 @@ export default function NewAppointment({ params }: { params: { userId: string } 
             />
             <h1 className="text-xl sm:text-2xl font-bold text-teal-300">MediNexus</h1>
           </div>
+          </Link>
           <h2 className="text-sm sm:text-sm mt-4 font-semibold text-teal-100 mb-1">Choose Your Physician</h2>
           <div className="relative mb-5 mt-8">
             <Input
