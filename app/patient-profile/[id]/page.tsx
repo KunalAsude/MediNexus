@@ -26,16 +26,18 @@ import {
   Briefcase,
   CreditCard,
   User,
+  Download,
 } from "lucide-react"
 import Link from "next/link"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { toast } from "@/hooks/use-toast"
 import { getRegisteredPatient, getUser } from "@/lib/actions/patient.actions"
 import { useParams } from "next/navigation"
-import { cancelAppointment, getAppointment, getUserAppointments } from "@/lib/actions/appointment.actions"
+import { cancelAppointment, getPrescription, getPrescriptionByAppointmentId, getUserAppointments } from "@/lib/actions/appointment.actions"
 import axios from "axios"
 import AppointmentModal from "@/components/ui/AppointmentModal"
 import { CancellationModal } from "@/components/ui/cancellation-modal"
+import { generatePrescriptionPDF } from "@/lib/actions/prescriptionPdfGenerator"
 
 // Appointment Card Component
 function AppointmentCard({
@@ -45,6 +47,7 @@ function AppointmentCard({
   copyMeetingLink,
   onManageVirtual,
   onCancel,
+  onDownloadPrescription,
   isPast = false,
 }) {
   return (
@@ -66,10 +69,14 @@ function AppointmentCard({
             </div>
           </div>
         </div>
-        
+
         {/* Right side with status and actions */}
-        <div className="flex flex-col items-end"> {/* Added items-end to align everything to the right */}
-          <div className="flex flex-wrap gap-2 justify-end"> {/* Added justify-end for badge alignment */}
+        <div className="flex flex-col items-end">
+          {" "}
+          {/* Added items-end to align everything to the right */}
+          <div className="flex flex-wrap gap-2 justify-end">
+            {" "}
+            {/* Added justify-end for badge alignment */}
             {appointment?.status === "scheduled" && (
               <Badge className={`${appointment.isVirtual ? "bg-blue-600" : "bg-green-600"} border-none`}>
                 {appointment.isVirtual ? "Virtual" : "In-Person"}
@@ -78,15 +85,15 @@ function AppointmentCard({
             {appointment?.status === "completed" && <Badge className="bg-green-600 border-none">Completed</Badge>}
             {appointment?.status === "cancelled" && <Badge className="bg-red-600 border-none">Cancelled</Badge>}
           </div>
-
           {/* Show cancellation reason if cancelled - aligned right */}
           {appointment?.status === "cancelled" && appointment.cancellationReason && (
             <p className="text-xs text-red-300 text-right mt-1">Reason: {appointment.cancellationReason}</p>
           )}
-          
           {/* Action buttons - only show for scheduled appointments that aren't in the past */}
           {appointment?.status === "scheduled" && !isPast && (
-            <div className="flex flex-wrap gap-2 mt-2 justify-end"> {/* Added justify-end for button alignment */}
+            <div className="flex flex-wrap gap-2 mt-2 justify-end">
+              {" "}
+              {/* Added justify-end for button alignment */}
               {appointment.isVirtual && (
                 <Button
                   variant="outline"
@@ -118,10 +125,23 @@ function AppointmentCard({
               </Button>
             </div>
           )}
+          {isPast && appointment?.status !== "cancelled" && (
+            <div className="flex flex-wrap gap-2 mt-2 justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-blue-800/70 hover:bg-blue-900 border-none text-white h-8"
+                onClick={() => onDownloadPrescription && onDownloadPrescription(appointment)}  
+              >
+                <Download className="h-3 w-3 mr-1" />
+                Download Prescription
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>
-  );
+  )
 }
 export default function PatientProfile() {
   const [isVirtual, setIsVirtual] = useState(false)
@@ -183,6 +203,34 @@ export default function PatientProfile() {
     }
   }
 
+  const handleDownloadPrescription = async (appointment) => {
+    try {
+      setIsLoading(true)
+
+      console.log("appointment - ", appointment?._id)
+      const response = await getPrescriptionByAppointmentId(appointment?._id)
+      console.log("res - ", response.data)
+      let pdf =await generatePrescriptionPDF(response?.data)
+      console.log(pdf)
+
+      
+
+      toast({
+        title: "Success",
+        description: "Prescription downloaded successfully",
+      })
+    } catch (error) {
+      console.error("Error downloading prescription:", error)
+      toast({
+        title: "Error",
+        description: error.message || "Failed to download prescription",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   // Format date helper function
   const formatDate = (dateString) => {
     if (!dateString) return "N/A"
@@ -222,44 +270,43 @@ export default function PatientProfile() {
   }
 
   // Handle update appointment type
-  //   const handleUpdateAppointmentType = async () => {
-  //     if (!selectedAppointment) return
+  const handleUpdateAppointmentType = async () => {
+    if (!selectedAppointment) return
 
-  //     setIsLoading(true)
+    setIsLoading(true)
 
-  //     try {
+    try {
+      await axios.patch(`/api/appointments/${selectedAppointment._id}`, {
+        isVirtual,
+        meetingLink: isVirtual ? meetingLink : null,
+      })
 
-  //       await axios.patch(`/api/appointments/${selectedAppointment._id}`, {
-  //         isVirtual,
-  //         meetingLink: isVirtual ? meetingLink : null,
-  //       })
+      // Update the local state
+      setAppointments(
+        appointments.map((app) =>
+          app._id === selectedAppointment._id
+            ? { ...app, isVirtual, meetingLink: isVirtual ? meetingLink : null }
+            : app,
+        ),
+      )
 
-  //       // Update the local state
-  //       setAppointments(
-  //         appointments.map((app) =>
-  //           app._id === selectedAppointment._id
-  //             ? { ...app, isVirtual, meetingLink: isVirtual ? meetingLink : null }
-  //             : app,
-  //         ),
-  //       )
+      toast({
+        title: "Success",
+        description: "Appointment updated successfully",
+      })
 
-  //       toast({
-  //         title: "Success",
-  //         description: "Appointment updated successfully",
-  //       })
-
-  //       setVirtualMeetingModal(false)
-  //     } catch (error) {
-  //       console.error("Error updating appointment:", error)
-  //       toast({
-  //         title: "Error",
-  //         description: "Failed to update appointment",
-  //         variant: "destructive",
-  //       })
-  //     } finally {
-  //       setIsLoading(false)
-  //     }
-  //   }
+      setVirtualMeetingModal(false)
+    } catch (error) {
+      console.error("Error updating appointment:", error)
+      toast({
+        title: "Error",
+        description: "Failed to update appointment",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   // Handle cancel appointment
   //   const handleCancelAppointment = async () => {
@@ -274,7 +321,7 @@ export default function PatientProfile() {
   //         cancellationReason,
   //       })
 
-  //       const response = await getUserAppointments(selectedAppointment.userId)    
+  //       const response = await getUserAppointments(selectedAppointment.userId)
 
   //       // Update the local state
   //       setAppointments(
@@ -408,9 +455,8 @@ export default function PatientProfile() {
   return (
     <div className="w-full bg-background">
       <header className="p-6 bg-teal-950">
-        <Link href="/admin" className="text-teal-300 flex items-center mb-3 hover:underline">
+        <Link href="/" className="text-teal-300 flex items-center mb-3 hover:underline">
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Dashboard
         </Link>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-2xl font-bold text-white">Patient Profile</h1>
@@ -631,6 +677,7 @@ export default function PatientProfile() {
                         formatTime={formatTime}
                         copyMeetingLink={copyMeetingLink}
                         isPast={true}
+                        onDownloadPrescription={handleDownloadPrescription}
                       />
                     ))
                   ) : (
