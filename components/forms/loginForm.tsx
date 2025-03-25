@@ -3,17 +3,17 @@ import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 
 import { Resend } from 'resend'; // For email notifications
-import twilio from 'twilio'; // For SMS notifications
+// import twilio from 'twilio'; // For SMS notifications
 import Emergency from "@/lib/modals/emergency";
 
 // Initialize the email service
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Initialize Twilio
-const twilioClient = twilio(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN
-);
+// // Initialize Twilio
+// const twilioClient = twilio(
+//   process.env.TWILIO_ACCOUNT_SID,
+//   process.env.TWILIO_AUTH_TOKEN
+// );
 
 // Helper function to get auth data from request headers
 async function getAuthFromRequest(req) {
@@ -138,41 +138,41 @@ async function sendEmailAlert(emergency) {
 }
 
 // Helper function to send SMS alerts
-async function sendSMSAlert(emergency) {
-  try {
-    // Get emergency phone from environment variables
-    const emergencyPhone = process.env.EMERGENCY_PHONE;
-    const twilioPhone = process.env.TWILIO_PHONE_NUMBER;
+// async function sendSMSAlert(emergency) {
+//   try {
+//     // Get emergency phone from environment variables
+//     const emergencyPhone = process.env.EMERGENCY_PHONE;
+//     const twilioPhone = process.env.TWILIO_PHONE_NUMBER;
 
-    if (!emergencyPhone || !twilioPhone) {
-      console.log("SMS alert not sent: Missing phone configuration");
-      return false;
-    }
+//     if (!emergencyPhone || !twilioPhone) {
+//       console.log("SMS alert not sent: Missing phone configuration");
+//       return false;
+//     }
 
-    // Format the location for Google Maps link
-    const mapsLink = `https://maps.google.com/?q=${emergency.location.latitude},${emergency.location.longitude}`;
+//     // Format the location for Google Maps link
+//     const mapsLink = `https://maps.google.com/?q=${emergency.location.latitude},${emergency.location.longitude}`;
 
-    // Prepare the SMS message
-    const message = `🚨 URGENT: MediNexus Emergency Alert
-    Time: ${new Date(emergency.timestamp).toLocaleString()}
-    User: ${emergency.userName || 'Anonymous'}
-    Location: ${mapsLink}
-    Respond immediately.`;
+//     // Prepare the SMS message
+//     const message = `🚨 URGENT: MediNexus Emergency Alert
+//     Time: ${new Date(emergency.timestamp).toLocaleString()}
+//     User: ${emergency.userName || 'Anonymous'}
+//     Location: ${mapsLink}
+//     Respond immediately.`;
 
-    // Send the SMS
-    const result = await twilioClient.messages.create({
-      body: message,
-      from: twilioPhone,
-      to: emergencyPhone
-    });
+//     // Send the SMS
+//     const result = await twilioClient.messages.create({
+//       body: message,
+//       from: twilioPhone,
+//       to: emergencyPhone
+//     });
 
-    console.log("Emergency SMS alert sent successfully", result.sid);
-    return true;
-  } catch (error) {
-    console.error("Failed to send emergency SMS:", error);
-    return false;
-  }
-}
+//     console.log("Emergency SMS alert sent successfully", result.sid);
+//     return true;
+//   } catch (error) {
+//     console.error("Failed to send emergency SMS:", error);
+//     return false;
+//   }
+// }
 
 // Add a GET method to check the status of an emergency
 export async function GET(req) {
