@@ -105,27 +105,6 @@ export default function ChatPage() {
   const inputRef = useRef<HTMLInputElement>(null)
   const recognitionRef = useRef<any>(null)
 
-  // Handle URL parameters
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const searchParams = new URLSearchParams(window.location.search)
-      const messageParam = searchParams.get('message')
-      
-      if (messageParam) {
-        // Decode and set the message in the input field
-        const decodedMessage = decodeURIComponent(messageParam)
-        setInput(decodedMessage)
-        
-        // Focus the input field
-        inputRef.current?.focus()
-        
-        // Remove the message parameter from URL without page reload
-        const newUrl = window.location.pathname
-        window.history.replaceState({}, '', newUrl)
-      }
-    }
-  }, [])
-
   // Scroll to bottom of messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -318,45 +297,49 @@ export default function ChatPage() {
     }
   }
 
-  const bookAppointment = (doctor:any) => {
-    if (!doctor || !doctor.hospitalId) {
-      alert('Invalid doctor details');
-      return;
-    }
-    router.push('/');
-    setTimeout(() => {
+
+
+const bookAppointment = (doctor:any) => {
+
+  if (!doctor || !doctor.hospitalId) {
+    alert('Invalid doctor details');
+    return;
+  }
+  router.push('/');
+  setTimeout(() => {
       router.push('/dashboard'); 
       setTimeout(() => {
         router.push('/patients'); 
       }, 500); 
     }, 500);
-  };
+};
+
 
   // Function to get availability status text from weeklyAvailability
-  const getAvailabilityText = (doctor: Doctor) => {
-    // First check if weeklyAvailability exists
-    if (!doctor.weeklyAvailability) {
-      return "Availability unknown";
-    }
-    
-    const daysOfWeek = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-    
-    try {
-      const availableDays = daysOfWeek.filter(day => {
-        // Safe access with optional chaining
-        const dayAvailability = doctor.weeklyAvailability[day as keyof typeof doctor.weeklyAvailability];
-        return Array.isArray(dayAvailability) && dayAvailability.length > 0;
-      });
-      
-      if (availableDays.length === 0) return "No availability";
-      if (availableDays.length > 3) return "Available most days";
-      
-      return `Available on ${availableDays.map(day => day.charAt(0).toUpperCase() + day.slice(1)).join(', ')}`;
-    } catch (error) {
-      console.error("Error processing availability for doctor:", doctor.name, error);
-      return "Availability info unavailable";
-    }
+const getAvailabilityText = (doctor: Doctor) => {
+  // First check if weeklyAvailability exists
+  if (!doctor.weeklyAvailability) {
+    return "Availability unknown";
   }
+  
+  const daysOfWeek = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+  
+  try {
+    const availableDays = daysOfWeek.filter(day => {
+      // Safe access with optional chaining
+      const dayAvailability = doctor.weeklyAvailability[day as keyof typeof doctor.weeklyAvailability];
+      return Array.isArray(dayAvailability) && dayAvailability.length > 0;
+    });
+    
+    if (availableDays.length === 0) return "No availability";
+    if (availableDays.length > 3) return "Available most days";
+    
+    return `Available on ${availableDays.map(day => day.charAt(0).toUpperCase() + day.slice(1)).join(', ')}`;
+  } catch (error) {
+    console.error("Error processing availability for doctor:", doctor.name, error);
+    return "Availability info unavailable";
+  }
+}
 
   return (
     <div className="h-screen flex flex-col bg-gradient-to-b from-teal-950 to-black overflow-hidden">
