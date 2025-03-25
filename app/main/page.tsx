@@ -7,8 +7,6 @@ import {
   MapPin,
   Star,
   Store,
-  AmbulanceIcon as FirstAid,
-  Stethoscope,
   Activity,
   Users,
   Search,
@@ -87,35 +85,39 @@ export interface Message {
   timestamp?: string
 }
 
+// Add Google Maps types
+interface GoogleGeocodeResponse {
+  results: Array<{
+    formatted_address: string
+    geometry: {
+      location: {
+        lat: number
+        lng: number
+      }
+    }
+  }>
+  status: string
+}
+
+interface UserData {
+  id: string
+  name: string
+  email: string
+  profileImage?: string
+  phone?: string
+  emergencyContact?: {
+    name: string
+    phone: string
+    relation: string
+  }
+}
+
 declare global {
   interface Window {
     SpeechRecognition: any
     webkitSpeechRecognition: any
   }
 }
-
-const services = [
-  {
-    icon: <FirstAid className="h-8 w-8 text-teal-400" />,
-    title: "Emergency Care",
-    description: "24/7 emergency medical services with rapid response teams",
-  },
-  {
-    icon: <Stethoscope className="h-8 w-8 text-teal-400" />,
-    title: "Specialist Consultation",
-    description: "Expert medical consultation across all specialties",
-  },
-  {
-    icon: <Activity className="h-8 w-8 text-teal-400" />,
-    title: "Diagnostic Services",
-    description: "Advanced diagnostic and imaging facilities",
-  },
-  {
-    icon: <Users className="h-8 w-8 text-teal-400" />,
-    title: "Patient Care",
-    description: "Comprehensive patient care and support services",
-  },
-]
 
 const achievements = [
   {
@@ -170,7 +172,9 @@ export default function Home() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
-  const [userData, setUserData] = useState(null)
+  const [userData, setUserData] = useState<UserData | null>(null)
+  const [isEmergencyActive, setIsEmergencyActive] = useState(false)
+  const [isGettingLocation, setIsGettingLocation] = useState(false)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -327,6 +331,75 @@ export default function Home() {
     }
   }, [])
 
+  const handleEmergencyClick = async () => {
+    if (isGettingLocation) return
+
+    try {
+      setIsGettingLocation(true)
+      setIsEmergencyActive(true)
+
+      // Request location with high accuracy
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0,
+        })
+      })
+
+      const { latitude, longitude } = position.coords
+
+      // Prepare emergency data
+      const emergencyData = {
+        latitude,
+        longitude,
+        timestamp: new Date().toISOString(),
+        userDetails: {
+          id: userData?.id || "anonymous",
+          name: userData?.name || "Anonymous User",
+          email: userData?.email || "No email available",
+          phone: userData?.phone || "No phone available",
+          emergencyContact: userData?.emergencyContact || null,
+        },
+      }
+
+      // Send emergency alert email using Resend
+      const emailResponse = await fetch("/api/send-emergency-alert", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(emergencyData),
+      })
+
+      if (!emailResponse.ok) {
+        throw new Error("Failed to send emergency alert")
+      }
+
+      // Show success message
+      toast({
+        title: "Emergency Alert Sent",
+        description: "Your location has been sent to the MediNexus emergency team. Help is on the way.",
+        variant: "destructive",
+      })
+
+      // Reset states after 5 seconds
+      setTimeout(() => {
+        setIsEmergencyActive(false)
+        setIsGettingLocation(false)
+      }, 5000)
+    } catch (error) {
+      console.error("Error in emergency alert:", error)
+      toast({
+        title: "Error",
+        description: "Could not send emergency alert. Please try again or call emergency services directly.",
+        variant: "destructive",
+      })
+      setIsGettingLocation(false)
+      setIsEmergencyActive(false)
+    }
+  }
+
   return (
     <div className="min-h-screen font-sans antialiased no-scrollbar overflow-x-hidden">
       <style jsx global>
@@ -361,9 +434,6 @@ export default function Home() {
             {isListening ? <MicOff size={20} className="text-red-400" /> : <Mic size={20} className="text-teal-300" />}
           </button>
           {isListening && <div className="hidden md:block text-sm italic text-teal-300">Listening...</div>}
-          <a href="#services" className="hidden md:inline text-teal-300 hover:text-teal-400 transition-colors">
-            Services
-          </a>
           <a href="#hospitals" className="hidden md:inline text-teal-300 hover:text-teal-400 transition-colors">
             Hospitals
           </a>
@@ -456,6 +526,17 @@ export default function Home() {
               <span className="hidden md:inline">Login</span>
             </a>
           )}
+          <button
+            onClick={handleEmergencyClick}
+            className={`p-2 rounded-full ${isEmergencyActive ? "animate-pulse" : " hover:bg-red-600"} transition-colors flex items-center gap-2 text-white`}
+            aria-label="Emergency Alert"
+          >
+            <img
+              src="https://res.cloudinary.com/kunalstorage/image/upload/v1742881523/emergency-removebg-preview_1_f4yow9.png"
+              alt="MediNexus Logo"
+              className="h-8 w-8"
+            />
+          </button>
         </nav>
       </header>
 
@@ -710,8 +791,8 @@ export default function Home() {
                   type="email"
                   placeholder="Enter your email"
                   className=" border-gray-900"
-                // value={email}
-                // onChange={(e) => setEmail(e.target.value)}
+                  // value={email}
+                  // onChange={(e) => setEmail(e.target.value)}
                 />
                 <Button
                   type="submit"
@@ -733,12 +814,6 @@ export default function Home() {
                   <a href="#" className="hover:text-teal-500 transition-colors flex items-center gap-2 group">
                     <span className="h-px w-4 bg-teal-500 group-hover:w-6 transition-all"></span>
                     Home
-                  </a>
-                </li>
-                <li>
-                  <a href="#services" className="hover:text-teal-500 transition-colors flex items-center gap-2 group">
-                    <span className="h-px w-4 bg-teal-500 group-hover:w-6 transition-all"></span>
-                    Services
                   </a>
                 </li>
                 <li>
