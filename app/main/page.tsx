@@ -24,7 +24,6 @@ import {
   Mail,
   User,
   ChevronDown,
-  AlertCircle,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useEffect, useState, useRef } from "react"
@@ -38,14 +37,6 @@ import { Mic, MicOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 
 ChartJS.register(ArcElement, Tooltip, Legend)
 
@@ -94,20 +85,6 @@ export interface Message {
   content: string
   role: "user" | "assistant"
   timestamp?: string
-}
-
-// Add Emergency interface
-export interface EmergencyData {
-  userId: string | null
-  userName: string | null
-  location: {
-    latitude: number
-    longitude: number
-    accuracy: number
-  }
-  timestamp: string
-  deviceInfo: string
-  status: "pending" | "processing" | "resolved"
 }
 
 declare global {
@@ -176,9 +153,6 @@ const reviews = [
   { name: "Amit P.", rating: 5, comment: "Top-notch facilities and caring doctors. Thank you MediNexus!" },
 ]
 
-// Add the emergency API endpoint
-const EMERGENCY_API_ENDPOINT = "/api/emergency";
-
 export default function Home() {
   const { toast } = useToast()
   const [hospitals, setHospitals] = useState<Hospital[]>([])
@@ -197,13 +171,6 @@ export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [userData, setUserData] = useState(null)
-
-  // Emergency related states
-  const [showEmergencyDialog, setShowEmergencyDialog] = useState(false)
-  const [emergencyLocation, setEmergencyLocation] = useState<{ latitude: number, longitude: number, accuracy: number } | null>(null)
-  const [isLoadingLocation, setIsLoadingLocation] = useState(false)
-  const [emergencyError, setEmergencyError] = useState<string | null>(null)
-  const [emergencySubmitting, setEmergencySubmitting] = useState(false)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -360,102 +327,6 @@ export default function Home() {
     }
   }, [])
 
-  // Emergency functions
-  const handleEmergencyClick = () => {
-    setShowEmergencyDialog(true)
-    setEmergencyError(null)
-    setIsLoadingLocation(true)
-
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setEmergencyLocation({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            accuracy: position.coords.accuracy
-          });
-          setIsLoadingLocation(false);
-        },
-        (error) => {
-          console.error("Error getting location:", error);
-          setEmergencyError("Unable to get your location. Please enable location services and try again.");
-          setIsLoadingLocation(false);
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-      );
-    } else {
-      setEmergencyError("Geolocation is not supported by your browser.");
-      setIsLoadingLocation(false);
-    }
-  };
-
-  const handleSubmitEmergency = async () => {
-    if (!emergencyLocation) {
-      setEmergencyError("Location data is required for emergency services.");
-      return;
-    }
-
-    setEmergencySubmitting(true);
-
-    // Prepare emergency data
-    const emergencyData: EmergencyData = {
-      userId: userData?.id || null,
-      userName: userData?.name || null,
-      location: emergencyLocation,
-      timestamp: new Date().toISOString(),
-      deviceInfo: navigator.userAgent,
-      status: "pending"
-    };
-
-    try {
-      // Send emergency data to backend
-      const response = await fetch(EMERGENCY_API_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem("authToken") || ''}`
-        },
-        body: JSON.stringify(emergencyData)
-      });
-
-      if (!response.ok) {
-        throw new Error(`Emergency request failed: ${response.status}`);
-      }
-
-      const result = await response.json();
-
-      // Show success notification
-      toast({
-        title: "Emergency Alert Sent",
-        description: "Medical assistance has been notified of your emergency. Please stay where you are if possible.",
-        variant: "success",
-        duration: 10000,
-      });
-
-      setShowEmergencyDialog(false);
-    } catch (error) {
-      console.error("Error sending emergency alert:", error);
-      setEmergencyError("Failed to send emergency alert. Please try again or call emergency services directly.");
-
-      // Even if API fails, show a toast to ensure user knows something is happening
-      toast({
-        title: "Emergency System Error",
-        description: "Unable to process your emergency through our system. Please call emergency services directly at 1800-MED-HELP.",
-        variant: "destructive",
-        duration: 10000,
-      });
-    } finally {
-      setEmergencySubmitting(false);
-    }
-  };
-
-  const handleCancelEmergency = () => {
-    setShowEmergencyDialog(false);
-    setEmergencyLocation(null);
-    setEmergencyError(null);
-  };
-  const imageUrl = "https://res.cloudinary.com/kunalstorage/image/upload/v1742881523/emergency-removebg-preview_1_f4yow9.png";
-
   return (
     <div className="min-h-screen font-sans antialiased no-scrollbar overflow-x-hidden">
       <style jsx global>
@@ -472,9 +343,6 @@ export default function Home() {
         </Link>
 
         <nav className="flex items-center space-x-6">
-          {/* Emergency Button */}
-          
-
           <button
             onClick={() => {
               if (recognition) {
@@ -493,9 +361,9 @@ export default function Home() {
             {isListening ? <MicOff size={20} className="text-red-400" /> : <Mic size={20} className="text-teal-300" />}
           </button>
           {isListening && <div className="hidden md:block text-sm italic text-teal-300">Listening...</div>}
-          {/* <a href="#services" className="hidden md:inline text-teal-300 hover:text-teal-400 transition-colors">
+          <a href="#services" className="hidden md:inline text-teal-300 hover:text-teal-400 transition-colors">
             Services
-          </a> */}
+          </a>
           <a href="#hospitals" className="hidden md:inline text-teal-300 hover:text-teal-400 transition-colors">
             Hospitals
           </a>
@@ -587,102 +455,9 @@ export default function Home() {
               <User size={20} />
               <span className="hidden md:inline">Login</span>
             </a>
-            
           )}
-          <button
-            onClick={handleEmergencyClick}
-            className="p-1 hover:bg-red-700 text-white  rounded-lg transition-colors flex items-center gap-2"
-            aria-label="Emergency assistance"
-          >
-            <img
-              src={imageUrl}
-              alt="Emergency"
-              className="w-8 h-8 pb-1 object-contain rounded"
-            />
-          </button>
         </nav>
       </header>
-
-      {/* Emergency Dialog */}
-      <Dialog open={showEmergencyDialog} onOpenChange={setShowEmergencyDialog}>
-        <DialogContent className="sm:max-w-md bg-teal-950 border-red-500">
-          <DialogHeader>
-            <DialogTitle className="text-xl text-red-400 flex items-center gap-2">
-              <AlertCircle className="h-6 w-6" />
-              Emergency Assistance
-            </DialogTitle>
-            <DialogDescription className="text-teal-300">
-              We're capturing your location to send emergency medical assistance.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            {isLoadingLocation ? (
-              <div className="flex justify-center items-center py-8">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-500"></div>
-              </div>
-            ) : emergencyLocation ? (
-              <div className="space-y-4">
-                <div className="bg-teal-900/50 p-4 rounded-lg">
-                  <h4 className="text-teal-300 font-medium mb-2">Your Location:</h4>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div className="text-teal-400">Latitude:</div>
-                    <div className="text-white">{emergencyLocation.latitude.toFixed(6)}</div>
-                    <div className="text-teal-400">Longitude:</div>
-                    <div className="text-white">{emergencyLocation.longitude.toFixed(6)}</div>
-                    <div className="text-teal-400">Accuracy:</div>
-                    <div className="text-white">{emergencyLocation.accuracy.toFixed(0)} meters</div>
-                  </div>
-                </div>
-
-                <div className="bg-red-900/20 p-4 rounded-lg border border-red-500/30">
-                  <p className="text-white text-sm">
-                    By clicking "Send Emergency Alert", your location will be shared with MediNexus emergency responders who will attempt to provide assistance as quickly as possible.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-red-900/20 p-4 rounded-lg border border-red-500/30">
-                <p className="text-red-300 text-sm font-medium mb-2">Location Error:</p>
-                <p className="text-white text-sm">{emergencyError || "Unable to get your location. Please try again."}</p>
-              </div>
-            )}
-          </div>
-
-          {emergencyError && (
-            <div className="my-2 px-4 py-3 bg-red-900/20 text-red-300 rounded-md text-sm">
-              {emergencyError}
-            </div>
-          )}
-
-          <DialogFooter className="sm:justify-between">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleCancelEmergency}
-              className="border-gray-600 text-teal-300 hover:bg-teal-900"
-              disabled={emergencySubmitting}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={handleSubmitEmergency}
-              className="bg-red-600 hover:bg-red-700 text-white"
-              disabled={isLoadingLocation || !emergencyLocation || emergencySubmitting}
-            >
-              {emergencySubmitting ? (
-                <>
-                  <div className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
-                  Processing...
-                </>
-              ) : (
-                "Send Emergency Alert"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Hero Section */}
       <div className="bg-teal-900/30 pt-28 pb-16 px-4 sm:px-6 lg:px-8 m-3 rounded-lg">
