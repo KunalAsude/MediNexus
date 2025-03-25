@@ -768,154 +768,187 @@ export default function Home() {
       </button>
 
       {/* Footer */}
-      <footer className=" text-zinc-600 dark:text-zinc-400 pt-16 pb-8 mt-auto border-t border-t-gray-900">
-        <div className="max-w-7xl mx-auto px-4">
-          {/* Top Section with Logo and Newsletter */}
-          <div className="flex flex-col md:flex-row items-center justify-between mb-16 gap-8">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <img
-                  src="https://img.icons8.com/arcade/64/hospital.png"
-                  alt="MediNexus Logo"
-                  className="h-12 w-12 relative z-10"
-                />
-                <div className="absolute -inset-1 bg-teal-100 dark:bg-teal-900/30 rounded-lg blur-sm" />
-              </div>
-              <span className="text-2xl font-bold text-zinc-800 dark:text-white">MediNexus</span>
+      <footer className="bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 pt-16 pb-8 mt-auto border-t border-zinc-200 dark:border-zinc-800">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        {/* Top Section with Logo and Newsletter */}
+        <div className="flex flex-col md:flex-row items-center justify-between mb-16 gap-8">
+          <div
+            className="flex items-center gap-3 group"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+          >
+            <div className="relative">
+              <img
+                src="https://img.icons8.com/arcade/64/hospital.png"
+                alt="MediNexus Logo"
+                className={`h-12 w-12 relative z-10 transition-transform duration-300 ${isHovered ? "scale-110" : ""}`}
+              />
+              <div
+                className={`absolute -inset-1 bg-teal-100 dark:bg-teal-900/30 rounded-lg blur-sm transition-all duration-300 ${isHovered ? "scale-110 bg-teal-200 dark:bg-teal-800/40" : ""}`}
+              />
             </div>
-
-            <div className="max-w-md w-full">
-              <h4 className="text-zinc-800 dark:text-white font-semibold mb-3 text-left">Join Our Newsletter</h4>
-              <form className="flex gap-2">
-                <Input
-                  type="email"
-                  placeholder="Enter your email"
-                  className=" border-gray-900"
-                  // value={email}
-                  // onChange={(e) => setEmail(e.target.value)}
-                />
-                <Button
-                  type="submit"
-                  variant="outline"
-                  className="border-teal-500 text-teal-500 hover:bg-teal-500 hover:text-white transition-colors"
-                >
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </form>
-            </div>
+            <span className="text-2xl font-bold text-zinc-800 dark:text-white transition-colors">MediNexus</span>
           </div>
 
-          {/* Main Content Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16 text-left">
-            <div>
-              <h4 className="text-zinc-800 dark:text-white font-semibold mb-6">Quick Links</h4>
-              <ul className="space-y-4">
-                <li>
-                  <a href="#" className="hover:text-teal-500 transition-colors flex items-center gap-2 group">
-                    <span className="h-px w-4 bg-teal-500 group-hover:w-6 transition-all"></span>
-                    Home
-                  </a>
-                </li>
-                <li>
-                  <a href="#hospitals" className="hover:text-teal-500 transition-colors flex items-center gap-2 group">
-                    <span className="h-px w-4 bg-teal-500 group-hover:w-6 transition-all"></span>
-                    Hospitals
-                  </a>
-                </li>
-                <li>
-                  <a href="#doctors" className="hover:text-teal-500 transition-colors flex items-center gap-2 group">
-                    <span className="h-px w-4 bg-teal-500 group-hover:w-6 transition-all"></span>
-                    Find a Doctor
-                  </a>
-                </li>
-              </ul>
-            </div>
+          <div className="max-w-md w-full bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-lg shadow-sm">
+            <h4 className="text-zinc-800 dark:text-white font-semibold mb-3 text-left">Join Our Newsletter</h4>
+            <form className="flex gap-2">
+              <Input
+                type="email"
+                placeholder="Enter your email"
+                className="border-zinc-300 dark:border-zinc-700 focus:border-teal-500 dark:focus:border-teal-500"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              <Button type="submit" className="bg-teal-500 hover:bg-teal-600 text-white transition-colors">
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </form>
+          </div>
+        </div>
 
-            <div>
-              <h4 className="text-zinc-800 dark:text-white font-semibold mb-6">Contact</h4>
-              <ul className="space-y-4">
-                <li className="flex items-center gap-2 hover:text-teal-500 transition-colors group cursor-pointer">
-                  <Mail className="h-4 w-4 text-teal-500" />
-                  support@medinexus.com
-                </li>
-                <li className="flex items-center gap-2 hover:text-teal-500 transition-colors group cursor-pointer">
-                  <Phone className="h-4 w-4 text-teal-500" />
-                  +91 1234567890
-                </li>
-                <li className="flex items-center gap-2 hover:text-teal-500 transition-colors group cursor-pointer">
-                  <MapPin className="h-4 w-4 text-teal-500" />
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16 text-left">
+          <div className="space-y-6">
+            <h4 className="text-zinc-800 dark:text-white font-semibold mb-6 relative inline-block">
+              Quick Links
+              <span className="absolute -bottom-2 left-0 w-12 h-0.5 bg-teal-500"></span>
+            </h4>
+            <ul className="space-y-4">
+              <li>
+                <Link href="#" className="hover:text-teal-500 transition-colors flex items-center gap-2 group">
+                  <span className="h-px w-4 bg-teal-500 group-hover:w-6 transition-all duration-300"></span>
+                  Home
+                </Link>
+              </li>
+              <li>
+                <Link href="#hospitals" className="hover:text-teal-500 transition-colors flex items-center gap-2 group">
+                  <span className="h-px w-4 bg-teal-500 group-hover:w-6 transition-all duration-300"></span>
+                  Hospitals
+                </Link>
+              </li>
+              <li>
+                <Link href="#doctors" className="hover:text-teal-500 transition-colors flex items-center gap-2 group">
+                  <span className="h-px w-4 bg-teal-500 group-hover:w-6 transition-all duration-300"></span>
+                  Find a Doctor
+                </Link>
+              </li>
+              <li>
+                <Link href="#services" className="hover:text-teal-500 transition-colors flex items-center gap-2 group">
+                  <span className="h-px w-4 bg-teal-500 group-hover:w-6 transition-all duration-300"></span>
+                  Our Services
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          <div className="space-y-6">
+            <h4 className="text-zinc-800 dark:text-white font-semibold mb-6 relative inline-block">
+              Contact
+              <span className="absolute -bottom-2 left-0 w-12 h-0.5 bg-teal-500"></span>
+            </h4>
+            <ul className="space-y-4">
+              <li className="flex items-start gap-3 group">
+                <Mail className="h-5 w-5 text-teal-500 mt-0.5 shrink-0" />
+                <span className="group-hover:text-teal-500 transition-colors">support@medinexus.com</span>
+              </li>
+              <li className="flex items-start gap-3 group">
+                <Phone className="h-5 w-5 text-teal-500 mt-0.5 shrink-0" />
+                <span className="group-hover:text-teal-500 transition-colors">+91 1234567890</span>
+              </li>
+              <li className="flex items-start gap-3 group">
+                <MapPin className="h-5 w-5 text-teal-500 mt-0.5 shrink-0" />
+                <span className="group-hover:text-teal-500 transition-colors">
+                  123 Healthcare Avenue,
+                  <br />
                   New Delhi, India
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-zinc-800 dark:text-white font-semibold mb-6">Legal</h4>
-              <ul className="space-y-4">
-                <li>
-                  <a href="#" className="hover:text-teal-500 transition-colors flex items-center gap-2 group">
-                    <span className="h-px w-4 bg-teal-500 group-hover:w-6 transition-all"></span>
-                    Privacy Policy
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-teal-500 transition-colors flex items-center gap-2 group">
-                    <span className="h-px w-4 bg-teal-500 group-hover:w-6 transition-all"></span>
-                    Terms of Service
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-teal-500 transition-colors flex items-center gap-2 group">
-                    <span className="h-px w-4 bg-teal-500 group-hover:w-6 transition-all"></span>
-                    Cookie Policy
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-zinc-800 dark:text-white font-semibold mb-6">Connect With Us</h4>
-              <div className="flex gap-3">
-                <a
-                  href="#"
-                  className="p-2 rounded-lg border border-gray-900 hover:border-teal-500 hover:text-teal-500 transition-colors"
-                >
-                  <Facebook className="h-5 w-5" />
-                </a>
-                <a
-                  href="#"
-                  className="p-2 rounded-lg border border-gray-900 hover:border-teal-500 hover:text-teal-500 transition-colors"
-                >
-                  <Twitter className="h-5 w-5" />
-                </a>
-                <a
-                  href="#"
-                  className="p-2 rounded-lg border border-gray-900 hover:border-teal-500 hover:text-teal-500 transition-colors"
-                >
-                  <Linkedin className="h-5 w-5" />
-                </a>
-                <a
-                  href="#"
-                  className="p-2 rounded-lg border border-gray-900 hover:border-teal-500 hover:text-teal-500 transition-colors"
-                >
-                  <Instagram className="h-5 w-5" />
-                </a>
-              </div>
-              <div className="mt-8 p-4  rounded-lg border border-gray-900 ">
-                <h5 className="text-zinc-800 dark:text-white font-semibold mb-2">24/7 Emergency</h5>
-                <p className="text-2xl font-bold text-teal-500">1800-MED-HELP</p>
-              </div>
-            </div>
+                </span>
+              </li>
+            </ul>
           </div>
 
-          {/* Bottom Bar */}
-          <div className="pt-8 border-t border-t-gray-900 text-center">
-            <div className="flex items-center justify-center gap-1 text-sm">
-              © {new Date().getFullYear()} MediNexus.
+          <div className="space-y-6">
+            <h4 className="text-zinc-800 dark:text-white font-semibold mb-6 relative inline-block">
+              Legal
+              <span className="absolute -bottom-2 left-0 w-12 h-0.5 bg-teal-500"></span>
+            </h4>
+            <ul className="space-y-4">
+              <li>
+                <Link href="#" className="hover:text-teal-500 transition-colors flex items-center gap-2 group">
+                  <span className="h-px w-4 bg-teal-500 group-hover:w-6 transition-all duration-300"></span>
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link href="#" className="hover:text-teal-500 transition-colors flex items-center gap-2 group">
+                  <span className="h-px w-4 bg-teal-500 group-hover:w-6 transition-all duration-300"></span>
+                  Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link href="#" className="hover:text-teal-500 transition-colors flex items-center gap-2 group">
+                  <span className="h-px w-4 bg-teal-500 group-hover:w-6 transition-all duration-300"></span>
+                  Cookie Policy
+                </Link>
+              </li>
+              <li>
+                <Link href="#" className="hover:text-teal-500 transition-colors flex items-center gap-2 group">
+                  <span className="h-px w-4 bg-teal-500 group-hover:w-6 transition-all duration-300"></span>
+                  Accessibility
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          <div className="space-y-6">
+            <h4 className="text-zinc-800 dark:text-white font-semibold mb-6 relative inline-block">
+              Connect With Us
+              <span className="absolute -bottom-2 left-0 w-12 h-0.5 bg-teal-500"></span>
+            </h4>
+            <div className="flex gap-3">
+              <Link
+                href="#"
+                className="p-2.5 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:border-teal-500 hover:text-teal-500 transition-all duration-300 shadow-sm hover:shadow-md"
+              >
+                <Facebook className="h-5 w-5" />
+              </Link>
+              <Link
+                href="#"
+                className="p-2.5 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:border-teal-500 hover:text-teal-500 transition-all duration-300 shadow-sm hover:shadow-md"
+              >
+                <Twitter className="h-5 w-5" />
+              </Link>
+              <Link
+                href="#"
+                className="p-2.5 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:border-teal-500 hover:text-teal-500 transition-all duration-300 shadow-sm hover:shadow-md"
+              >
+                <Linkedin className="h-5 w-5" />
+              </Link>
+              <Link
+                href="#"
+                className="p-2.5 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:border-teal-500 hover:text-teal-500 transition-all duration-300 shadow-sm hover:shadow-md"
+              >
+                <Instagram className="h-5 w-5" />
+              </Link>
+            </div>
+            <div className="mt-8 p-5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-gradient-to-br from-teal-50 to-white dark:from-teal-900/20 dark:to-zinc-800/50 shadow-sm">
+              <h5 className="text-zinc-800 dark:text-white font-semibold mb-2">24/7 Emergency</h5>
+              <p className="text-2xl font-bold text-teal-500">1800-MED-HELP</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Always available for you</p>
             </div>
           </div>
         </div>
-      </footer>
+
+        {/* Bottom Bar */}
+        <div className="pt-8 border-t border-zinc-200 dark:border-zinc-800 text-center">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 text-sm">
+            <span>© {currentYear} MediNexus. All rights reserved.</span>
+            <span className="hidden sm:inline">|</span>
+            <span>Healing with care, powered by innovation</span>
+          </div>
+        </div>
+      </div>
+    </footer>
     </div>
   )
 }
