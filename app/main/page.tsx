@@ -407,7 +407,7 @@ export default function Home() {
       </style>
 
       {/* Header */}
-      <header className="admin-header mb-4 flex justify-between items-center px-6 py-4 bg-teal-900/50">
+      <header className="fixed top-0 w-full flex justify-between items-center bg-teal-950 px-6 py-2 shadow-md z-50">
         <Link href="/" className="cursor-pointer">
           <div className="flex items-center space-x-2">
             <img src="https://img.icons8.com/arcade/64/hospital.png" alt="MediNexus Logo" className="h-10 w-10" />
@@ -541,7 +541,7 @@ export default function Home() {
       </header>
 
       {/* Hero Section */}
-      <div className="bg-teal-900/30 pt-28 pb-16 px-4 sm:px-6 lg:px-8 m-3 rounded-lg">
+      <div className="bg-teal-900/30 pt-20  sm:pt-28 pb-16 mt-20 px-4 sm:px-6 lg:px-8 m-3 rounded-lg">
         <div className="max-w-7xl mx-auto text-center">
           <div className="inline-block bg-teal-900/50 text-teal-400 px-4 py-1 rounded-full text-sm font-medium mb-6">
             Trusted by 500+ hospitals nationwide
@@ -768,154 +768,162 @@ export default function Home() {
       </button>
 
       {/* Footer */}
-      <footer className=" text-zinc-600 dark:text-zinc-400 pt-16 pb-8 mt-auto border-t border-t-gray-900">
-        <div className="max-w-7xl mx-auto px-4">
-          {/* Top Section with Logo and Newsletter */}
-          <div className="flex flex-col md:flex-row items-center justify-between mb-16 gap-8">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <img
-                  src="https://img.icons8.com/arcade/64/hospital.png"
-                  alt="MediNexus Logo"
-                  className="h-12 w-12 relative z-10"
-                />
-                <div className="absolute -inset-1 bg-teal-100 dark:bg-teal-900/30 rounded-lg blur-sm" />
-              </div>
-              <span className="text-2xl font-bold text-zinc-800 dark:text-white">MediNexus</span>
+      <footer className=" text-zinc-400 pt-16 pb-8 mt-auto border-t border-t-zinc-900">
+      <div className="max-w-7xl mx-auto px-4">
+        {/* Top Section with Logo and Newsletter */}
+        <div className="flex flex-col md:flex-row items-center justify-between mb-16 gap-8">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <img
+                src="https://img.icons8.com/arcade/64/hospital.png"
+                alt="MediNexus Logo"
+                className="h-12 w-12 relative z-10"
+              />
+              <div className="absolute -inset-1 bg-teal-900/50 rounded-lg blur-sm" />
             </div>
-
-            <div className="max-w-md w-full">
-              <h4 className="text-zinc-800 dark:text-white font-semibold mb-3 text-left">Join Our Newsletter</h4>
-              <form className="flex gap-2">
-                <Input
-                  type="email"
-                  placeholder="Enter your email"
-                  className=" border-gray-900"
-                  // value={email}
-                  // onChange={(e) => setEmail(e.target.value)}
-                />
-                <Button
-                  type="submit"
-                  variant="outline"
-                  className="border-teal-500 text-teal-500 hover:bg-teal-500 hover:text-white transition-colors"
-                >
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </form>
-            </div>
+            <span className="text-2xl font-bold text-white">MediNexus</span>
           </div>
 
-          {/* Main Content Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16 text-left">
-            <div>
-              <h4 className="text-zinc-800 dark:text-white font-semibold mb-6">Quick Links</h4>
-              <ul className="space-y-4">
-                <li>
-                  <a href="#" className="hover:text-teal-500 transition-colors flex items-center gap-2 group">
-                    <span className="h-px w-4 bg-teal-500 group-hover:w-6 transition-all"></span>
-                    Home
-                  </a>
-                </li>
-                <li>
-                  <a href="#hospitals" className="hover:text-teal-500 transition-colors flex items-center gap-2 group">
-                    <span className="h-px w-4 bg-teal-500 group-hover:w-6 transition-all"></span>
-                    Hospitals
-                  </a>
-                </li>
-                <li>
-                  <a href="#doctors" className="hover:text-teal-500 transition-colors flex items-center gap-2 group">
-                    <span className="h-px w-4 bg-teal-500 group-hover:w-6 transition-all"></span>
-                    Find a Doctor
-                  </a>
-                </li>
-              </ul>
-            </div>
+          <div className="max-w-md w-full">
+            <h4 className="text-white font-semibold mb-3 text-left">Join Our Newsletter</h4>
+            <form className="flex gap-2">
+              <Input
+                type="email"
+                placeholder="Enter your email"
+                className="bg-zinc-800 border-zinc-700 focus:border-teal-500"
+                
+                onChange={(e) => console.log("")}
+              />
+              <Button type="submit" className="bg-teal-600 hover:bg-teal-500 text-white border-0">
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </form>
+          </div>
+        </div>
 
-            <div>
-              <h4 className="text-zinc-800 dark:text-white font-semibold mb-6">Contact</h4>
-              <ul className="space-y-4">
-                <li className="flex items-center gap-2 hover:text-teal-500 transition-colors group cursor-pointer">
-                  <Mail className="h-4 w-4 text-teal-500" />
-                  support@medinexus.com
-                </li>
-                <li className="flex items-center gap-2 hover:text-teal-500 transition-colors group cursor-pointer">
-                  <Phone className="h-4 w-4 text-teal-500" />
-                  +91 1234567890
-                </li>
-                <li className="flex items-center gap-2 hover:text-teal-500 transition-colors group cursor-pointer">
-                  <MapPin className="h-4 w-4 text-teal-500" />
-                  New Delhi, India
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-zinc-800 dark:text-white font-semibold mb-6">Legal</h4>
-              <ul className="space-y-4">
-                <li>
-                  <a href="#" className="hover:text-teal-500 transition-colors flex items-center gap-2 group">
-                    <span className="h-px w-4 bg-teal-500 group-hover:w-6 transition-all"></span>
-                    Privacy Policy
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-teal-500 transition-colors flex items-center gap-2 group">
-                    <span className="h-px w-4 bg-teal-500 group-hover:w-6 transition-all"></span>
-                    Terms of Service
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-teal-500 transition-colors flex items-center gap-2 group">
-                    <span className="h-px w-4 bg-teal-500 group-hover:w-6 transition-all"></span>
-                    Cookie Policy
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-zinc-800 dark:text-white font-semibold mb-6">Connect With Us</h4>
-              <div className="flex gap-3">
-                <a
-                  href="#"
-                  className="p-2 rounded-lg border border-gray-900 hover:border-teal-500 hover:text-teal-500 transition-colors"
-                >
-                  <Facebook className="h-5 w-5" />
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16 text-left">
+          <div>
+            <h4 className="text-white font-semibold mb-6 relative inline-block">
+              <span className="relative z-10">Quick Links</span>
+              <span className="absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-green-500 to-teal-500"></span>
+            </h4>
+            <ul className="space-y-4">
+              <li>
+                <a href="#" className="hover:text-teal-400 transition-colors flex items-center gap-2 group">
+                  <span className="h-px w-4 bg-green-500 group-hover:w-6 transition-all"></span>
+                  Home
                 </a>
-                <a
-                  href="#"
-                  className="p-2 rounded-lg border border-gray-900 hover:border-teal-500 hover:text-teal-500 transition-colors"
-                >
-                  <Twitter className="h-5 w-5" />
+              </li>
+              <li>
+                <a href="#hospitals" className="hover:text-teal-400 transition-colors flex items-center gap-2 group">
+                  <span className="h-px w-4 bg-green-500 group-hover:w-6 transition-all"></span>
+                  Hospitals
                 </a>
-                <a
-                  href="#"
-                  className="p-2 rounded-lg border border-gray-900 hover:border-teal-500 hover:text-teal-500 transition-colors"
-                >
-                  <Linkedin className="h-5 w-5" />
+              </li>
+              <li>
+                <a href="#doctors" className="hover:text-teal-400 transition-colors flex items-center gap-2 group">
+                  <span className="h-px w-4 bg-green-500 group-hover:w-6 transition-all"></span>
+                  Find a Doctor
                 </a>
-                <a
-                  href="#"
-                  className="p-2 rounded-lg border border-gray-900 hover:border-teal-500 hover:text-teal-500 transition-colors"
-                >
-                  <Instagram className="h-5 w-5" />
-                </a>
-              </div>
-              <div className="mt-8 p-4  rounded-lg border border-gray-900 ">
-                <h5 className="text-zinc-800 dark:text-white font-semibold mb-2">24/7 Emergency</h5>
-                <p className="text-2xl font-bold text-teal-500">1800-MED-HELP</p>
-              </div>
-            </div>
+              </li>
+            </ul>
           </div>
 
-          {/* Bottom Bar */}
-          <div className="pt-8 border-t border-t-gray-900 text-center">
-            <div className="flex items-center justify-center gap-1 text-sm">
-              © {new Date().getFullYear()} MediNexus.
+          <div>
+            <h4 className="text-white font-semibold mb-6 relative inline-block">
+              <span className="relative z-10">Contact</span>
+              <span className="absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-green-500 to-teal-500"></span>
+            </h4>
+            <ul className="space-y-4">
+              <li className="flex items-center gap-2 hover:text-teal-400 transition-colors cursor-pointer">
+                <Mail className="h-4 w-4 text-green-500" />
+                support@medinexus.com
+              </li>
+              <li className="flex items-center gap-2 hover:text-teal-400 transition-colors cursor-pointer">
+                <Phone className="h-4 w-4 text-green-500" />
+                +91 1234567890
+              </li>
+              <li className="flex items-center gap-2 hover:text-teal-400 transition-colors cursor-pointer">
+                <MapPin className="h-4 w-4 text-green-500" />
+                New Delhi, India
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="text-white font-semibold mb-6 relative inline-block">
+              <span className="relative z-10">Legal</span>
+              <span className="absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-green-500 to-teal-500"></span>
+            </h4>
+            <ul className="space-y-4">
+              <li>
+                <a href="#" className="hover:text-teal-400 transition-colors flex items-center gap-2 group">
+                  <span className="h-px w-4 bg-green-500 group-hover:w-6 transition-all"></span>
+                  Privacy Policy
+                </a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-teal-400 transition-colors flex items-center gap-2 group">
+                  <span className="h-px w-4 bg-green-500 group-hover:w-6 transition-all"></span>
+                  Terms of Service
+                </a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-teal-400 transition-colors flex items-center gap-2 group">
+                  <span className="h-px w-4 bg-green-500 group-hover:w-6 transition-all"></span>
+                  Cookie Policy
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="text-white font-semibold mb-6 relative inline-block">
+              <span className="relative z-10">Connect With Us</span>
+              <span className="absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-green-500 to-teal-500"></span>
+            </h4>
+            <div className="flex gap-3">
+              <a
+                href="#"
+                className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-teal-400 transition-colors"
+              >
+                <Facebook className="h-5 w-5" />
+              </a>
+              <a
+                href="#"
+                className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-teal-400 transition-colors"
+              >
+                <Twitter className="h-5 w-5" />
+              </a>
+              <a
+                href="#"
+                className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-teal-400 transition-colors"
+              >
+                <Linkedin className="h-5 w-5" />
+              </a>
+              <a
+                href="#"
+                className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-teal-400 transition-colors"
+              >
+                <Instagram className="h-5 w-5" />
+              </a>
+            </div>
+            <div className="mt-8 p-4 rounded-lg bg-zinc-800/50 border border-zinc-700">
+              <h5 className="text-white font-semibold mb-2">24/7 Emergency</h5>
+              <p className="text-2xl font-bold bg-gradient-to-r from-green-400 to-teal-400 bg-clip-text text-transparent">
+                1800-MED-HELP
+              </p>
             </div>
           </div>
         </div>
-      </footer>
+
+        {/* Bottom Bar */}
+        <div className="pt-8 border-t border-t-zinc-900 text-center">
+          <div className="flex items-center justify-center gap-1 text-sm">© {new Date().getFullYear()} MediNexus.</div>
+        </div>
+      </div>
+    </footer>
     </div>
   )
 }

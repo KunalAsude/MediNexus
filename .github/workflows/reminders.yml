@@ -16,10 +16,16 @@ jobs:
           url: 'https://medinexus.in/api/reminders'
           method: 'GET'
           timeout: 30000
-          customHeaders: '{"Authorization": "${{ secrets.REMINDER_API_TOKEN }}"}'
+          customHeaders: '{"Authorization": "Bearer ${{ secrets.REMINDER_API_TOKEN }}"}'
+          retryOnFailure: true
+          retryCount: 3
+          retryDelay: 5000
+          retryStatusCodes: '500,502,503,504'
       
       - name: Log Response
-        run: echo "API Response Status - ${{ steps.api-call.outputs.status }}"
+        run: |
+          echo "API Response Status - ${{ steps.api-call.outputs.status }}"
+          echo "API Response Body - ${{ steps.api-call.outputs.response }}"
       
       - name: Check API Response
         if: ${{ steps.api-call.outputs.status >= 400 }}
