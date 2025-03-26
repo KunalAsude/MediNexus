@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import connect from "@/lib/mongodb"
 import doctorModal from "@/lib/modals/doctorModal"
 import { getAllDoctors } from "@/lib/actions/patient.actions"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { analyzeSymptoms } from "@/lib/symptomAnalyzer"
 
 // Interfaces
@@ -67,8 +67,11 @@ export default function ChatPage() {
   const [showDoctorResults, setShowDoctorResults] = useState(false)
   const [currentSpecialty, setCurrentSpecialty] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const router = useRouter()
   
+  // Add search params and router
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -93,11 +96,38 @@ export default function ChatPage() {
         setIsLoading(false)
       }
     }
-    
+
     fetchAllDoctors()
   }, [])
 
-  // Set up speech recognition
+  // New effect to handle URL parameter message
+  useEffect(() => {
+    const urlMessage = searchParams.get('message')
+    
+    if (urlMessage) {
+      // Set the input with the URL message
+      setInput(urlMessage)
+
+      // Remove the message from the URL
+      const newUrl = window.location.pathname
+      window.history.replaceState({}, '', newUrl)
+
+      // Simulate form submission after a short delay to ensure doctors are loaded
+      const simulateSubmit = () => {
+        if (!isLoading) {
+          const simulatedEvent = { preventDefault: () => {} } as React.FormEvent
+          handleSubmit(simulatedEvent)
+        } else {
+          // If still loading, retry after a short delay
+          setTimeout(simulateSubmit, 500)
+        }
+      }
+
+      simulateSubmit()
+    }
+  }, [searchParams, isLoading])
+
+  // Set up speech recognition (previous implementation remains the same)
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
@@ -106,20 +136,20 @@ export default function ChatPage() {
         recognition.continuous = false
         recognition.interimResults = false
         recognition.lang = 'en-US'
-        
+
         recognition.onresult = (event: any) => {
           const transcript = event.results[0][0].transcript
           setInput(transcript)
         }
-        
+
         recognition.onend = () => {
           setIsListening(false)
         }
-        
+
         recognitionRef.current = recognition
       }
     }
-    
+
     // Clean up
     return () => {
       if (recognitionRef.current) {
@@ -135,23 +165,23 @@ export default function ChatPage() {
       // 1. First analyze the symptoms to determine specialty using our comprehensive analyzer
       const analysisResult = analyzeSymptoms(symptoms);
       const detectedSpecialty = analysisResult.specialty;
-      
+
       setCurrentSpecialty(detectedSpecialty);
-      
+
       // 2. Filter doctors with matching specialty from the pre-loaded list
       // First try exact match
-      let matchingDoctors = allDoctors.filter(doctor => 
+      let matchingDoctors = allDoctors.filter(doctor =>
         doctor.specialization.toLowerCase() === detectedSpecialty.toLowerCase()
       );
-      
+
       // If no exact matches, try partial matches
       if (matchingDoctors.length === 0) {
-        matchingDoctors = allDoctors.filter(doctor => 
+        matchingDoctors = allDoctors.filter(doctor =>
           doctor.specialization.toLowerCase().includes(detectedSpecialty.toLowerCase()) ||
           detectedSpecialty.toLowerCase().includes(doctor.specialization.toLowerCase())
         );
       }
-      
+
       // If still no matches, check for common specialty variations
       if (matchingDoctors.length === 0) {
         const specialtyVariations: Record<string, string[]> = {
@@ -166,25 +196,25 @@ export default function ChatPage() {
           "Gynecologist": ["Gynec", "Women's Health", "OB/GYN"],
           "Urologist": ["Urology", "Urinary"]
         };
-        
+
         const variations = specialtyVariations[detectedSpecialty] || [];
         if (variations.length > 0) {
-          matchingDoctors = allDoctors.filter(doctor => 
-            variations.some(variation => 
+          matchingDoctors = allDoctors.filter(doctor =>
+            variations.some(variation =>
               doctor.specialization.toLowerCase().includes(variation.toLowerCase())
             )
           );
         }
       }
-      
+
       console.log("Matching doctors:", matchingDoctors);
-      
+
       // Sort doctors by rating (highest first)
       const sortedDoctors = matchingDoctors.sort((a: Doctor, b: Doctor) => b.ratings_average - a.ratings_average);
-      
+
       // Generate a more informative response based on analysis
       let responseText = `Based on your symptoms, I recommend seeing a ${detectedSpecialty}.`;
-      
+
       // Add matched symptoms if available
       if (analysisResult.matchedSymptoms && analysisResult.matchedSymptoms.length > 0) {
         responseText += ` I noticed you mentioned ${analysisResult.matchedSymptoms.slice(0, 3).join(", ")}`;
@@ -193,15 +223,15 @@ export default function ChatPage() {
         }
         responseText += ".";
       }
-      
+
       // Add specialty description if available
       if (analysisResult.description) {
         responseText += ` ${analysisResult.description}`;
       }
-      
+
       // Add doctor availability
       responseText += ` I've found ${sortedDoctors.length > 0 ? 'some excellent specialists' : 'no specialists'} for you.`;
-      
+
       // Return top doctors and assistant response
       return {
         specialty: detectedSpecialty,
@@ -222,11 +252,11 @@ export default function ChatPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!input.trim() || isProcessing) return
-    
+
     const userMessage = input.trim()
     setInput("")
     setIsProcessing(true)
-    
+
     // Add user message to chat
     const newUserMessage: Message = {
       id: Date.now().toString(),
@@ -234,12 +264,12 @@ export default function ChatPage() {
       role: "user",
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
     }
-    
+
     setMessages(prev => [...prev, newUserMessage])
-    
+
     // Show typing indicator
     setIsTyping(true)
-    
+
     // Process the message and get response
     setTimeout(() => {
       try {
@@ -251,16 +281,16 @@ export default function ChatPage() {
             role: "assistant",
             timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
           }
-          
+
           setMessages(prev => [...prev, loadingMessage])
           setIsTyping(false)
           setIsProcessing(false)
           return
         }
-        
+
         // Analyze symptoms and get doctors from pre-loaded list
         const result = processSymptoms(userMessage)
-        
+
         // Add assistant response to chat
         const newAssistantMessage: Message = {
           id: (Date.now() + 1).toString(),
@@ -268,10 +298,10 @@ export default function ChatPage() {
           role: "assistant",
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
         }
-        
+
         setMessages(prev => [...prev, newAssistantMessage])
         setIsTyping(false)
-        
+
         // Update doctors list and show results
         if (result.doctors && result.doctors.length > 0) {
           setFoundDoctors(result.doctors)
@@ -281,7 +311,7 @@ export default function ChatPage() {
         }
       } catch (error) {
         console.error("Error processing message:", error)
-        
+
         // Add error message
         const errorMessage: Message = {
           id: (Date.now() + 1).toString(),
@@ -289,7 +319,7 @@ export default function ChatPage() {
           role: "assistant",
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
         }
-        
+
         setMessages(prev => [...prev, errorMessage])
         setIsTyping(false)
       } finally {
@@ -313,15 +343,15 @@ export default function ChatPage() {
     }
   }
 
-  const bookAppointment = (doctor:any) => {
+  const bookAppointment = (doctor: any) => {
     if (!doctor || !doctor.hospitalId) {
       alert('Invalid doctor details');
       return;
     }
-    
+
     // Close the doctor results sheet
     setShowDoctorResults(false);
-    
+
     // Add a message to the chat indicating booking in progress
     const bookingMessage: Message = {
       id: Date.now().toString(),
@@ -329,17 +359,17 @@ export default function ChatPage() {
       role: "assistant",
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
     };
-    
+
     setMessages(prev => [...prev, bookingMessage]);
-    
+
     // Navigate to the booking flow
     router.push('/');
     setTimeout(() => {
-        router.push('/dashboard'); 
-        setTimeout(() => {
-          router.push('/patients'); 
-        }, 500); 
+      router.push('/dashboard');
+      setTimeout(() => {
+        router.push('/patients');
       }, 500);
+    }, 500);
   };
 
   // Function to get availability status text from weeklyAvailability
@@ -348,19 +378,19 @@ export default function ChatPage() {
     if (!doctor.weeklyAvailability) {
       return "Availability unknown";
     }
-    
+
     const daysOfWeek = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-    
+
     try {
       const availableDays = daysOfWeek.filter(day => {
         // Safe access with optional chaining
         const dayAvailability = doctor.weeklyAvailability[day as keyof typeof doctor.weeklyAvailability];
         return Array.isArray(dayAvailability) && dayAvailability.length > 0;
       });
-      
+
       if (availableDays.length === 0) return "No availability";
       if (availableDays.length > 3) return "Available most days";
-      
+
       return `Available on ${availableDays.map(day => day.charAt(0).toUpperCase() + day.slice(1)).join(', ')}`;
     } catch (error) {
       console.error("Error processing availability for doctor:", doctor.name, error);
@@ -408,11 +438,10 @@ export default function ChatPage() {
                 )}
                 <div className="flex flex-col max-w-[80%] sm:max-w-[75%]">
                   <div
-                    className={`p-2 sm:p-3 rounded-lg shadow-md ${
-                      message.role === "user"
+                    className={`p-2 sm:p-3 rounded-lg shadow-md ${message.role === "user"
                         ? "bg-gradient-to-r from-teal-600 to-teal-700 text-white rounded-br-none"
                         : "bg-gradient-to-r from-teal-900 to-teal-950 border border-teal-700/50 text-teal-100 rounded-bl-none"
-                    }`}
+                      }`}
                   >
                     <div className="text-sm sm:text-base">{message.content}</div>
                   </div>
@@ -473,9 +502,8 @@ export default function ChatPage() {
                 onClick={toggleVoiceRecognition}
                 variant="ghost"
                 size="icon"
-                className={`rounded-full ${
-                  isListening ? "bg-red-500/20 text-red-400 animate-pulse" : "bg-teal-700/50 text-teal-300"
-                } hover:bg-teal-700/70 transition-colors`}
+                className={`rounded-full ${isListening ? "bg-red-500/20 text-red-400 animate-pulse" : "bg-teal-700/50 text-teal-300"
+                  } hover:bg-teal-700/70 transition-colors`}
                 disabled={isProcessing}
               >
                 {isListening ? <MicOff size={18} /> : <Mic size={18} />}
@@ -501,13 +529,12 @@ export default function ChatPage() {
           <SheetHeader className="p-4 border-b border-teal-700/30">
             <div className="flex justify-between items-center">
               <SheetTitle className="text-teal-300">Recommended Doctors</SheetTitle>
-              <button 
+              <button
                 onClick={() => setShowDoctorResults(false)}
                 className="text-teal-400 hover:text-teal-300"
                 title="Close doctor recommendations"
                 aria-label="Close doctor recommendations"
               >
-                <X size={20} />
               </button>
             </div>
             <SheetDescription className="text-teal-400/80">
@@ -524,15 +551,15 @@ export default function ChatPage() {
                   <CardContent className="p-4">
                     <div className="flex items-start">
                       <div className="flex-shrink-0 w-12 h-12 mr-3">
-                        <img 
-                          src={doctor.image || "https://img.icons8.com/ios/50/doctor-male--v1.png"} 
+                        <img
+                          src={doctor.image || "https://img.icons8.com/ios/50/doctor-male--v1.png"}
                           alt={doctor.name}
                           className="w-full h-full object-cover rounded-full"
                         />
                       </div>
                       <div className="flex-1">
                         <div className="flex justify-between items-start">
-                          <h4 className="font-bold text-teal-200">Dr. {doctor.name}</h4>
+                          <h4 className="font-bold text-teal-200">{doctor.name}</h4>
                           <Badge variant="outline" className="bg-yellow-500/10 text-yellow-400 border-yellow-400/30">
                             {doctor.ratings_average} ★
                           </Badge>
@@ -563,10 +590,10 @@ export default function ChatPage() {
               </div>
             )}
           </div>
-          <div className="p-4 border-t border-teal-700/30">
-            <Button 
+          <div className="p-4 border-t border-teal-700/30 px-4 py-2 pb-8 ">
+            <Button
               onClick={() => setShowDoctorResults(false)}
-              className="w-full bg-transparent border border-teal-500 text-teal-300 hover:bg-teal-800/50"
+              className="w-full bg-transparent border mb-5 border-teal-500 text-teal-300 hover:bg-teal-800/50"
             >
               Return to chat
             </Button>

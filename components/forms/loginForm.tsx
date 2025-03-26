@@ -1,5 +1,4 @@
 "use client"
-
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -7,11 +6,12 @@ import { Button } from "@/components/ui/button"
 import { Form } from "@/components/ui/form"
 import CustomFormField from "../customFormField"
 import SubmitButton from "../SubmitButton"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { UserFormValidation } from "@/lib/Validation"
 import { useRouter } from "next/navigation"
 import { createUser, getRegisteredPatient } from "@/lib/actions/patient.actions"
 import { toast } from "@/hooks/use-toast"
+import { Loader2 } from "lucide-react"
 
 export enum FormFieldTypes {
   INPUT = "input",
@@ -25,7 +25,27 @@ export enum FormFieldTypes {
 
 const LoginForm = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const router = useRouter();
+
+  useEffect(() => {
+    // Check if user is already logged in
+    const checkAuthentication = async () => {
+      try {
+        const authToken = localStorage.getItem('authToken');
+        if (authToken) {
+          // Optional: Add a server-side validation of the token here if needed
+          router.push('/');
+        }
+      } catch (error) {
+        console.error("Authentication check failed", error);
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkAuthentication();
+  }, [router]);
 
   const form = useForm<z.infer<typeof UserFormValidation>>({
     resolver: zodResolver(UserFormValidation),
@@ -59,7 +79,7 @@ const LoginForm = () => {
       }
 
       const registeredPatient = await getRegisteredPatient(newUser._id);
-      
+
       // Save user details to localStorage
       localStorage.setItem('authToken', newUser._id);
       localStorage.setItem('userDetails', JSON.stringify({
@@ -68,18 +88,15 @@ const LoginForm = () => {
         email: values.email,
         phone: values.phone,
       }));
+
       router.push('/');
-      
+
       // Show success toast
       toast({
         title: "Success",
         description: "You've successfully signed in!",
       });
-      
-      
 
-      
-      
     } catch (error) {
       console.log(error);
       toast({
@@ -91,7 +108,16 @@ const LoginForm = () => {
       setIsLoading(false);
     }
   }
-  
+
+  // Show a loading spinner while checking authentication
+  if (isCheckingAuth) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 flex-1">
@@ -132,5 +158,4 @@ const LoginForm = () => {
   )
 }
 
-// Rename export to match component name
 export default LoginForm;
