@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import connect from "@/lib/mongodb"
 import doctorModal from "@/lib/modals/doctorModal"
 import { getAllDoctors } from "@/lib/actions/patient.actions"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { analyzeSymptoms } from "@/lib/symptomAnalyzer"
 
 // Interfaces
@@ -67,9 +67,6 @@ export default function ChatPage() {
   const [showDoctorResults, setShowDoctorResults] = useState(false)
   const [currentSpecialty, setCurrentSpecialty] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  
-  // Add search params and router
-  const searchParams = useSearchParams()
   const router = useRouter()
 
   // Refs
@@ -100,34 +97,7 @@ export default function ChatPage() {
     fetchAllDoctors()
   }, [])
 
-  // New effect to handle URL parameter message
-  useEffect(() => {
-    const urlMessage = searchParams.get('message')
-    
-    if (urlMessage) {
-      // Set the input with the URL message
-      setInput(urlMessage)
-
-      // Remove the message from the URL
-      const newUrl = window.location.pathname
-      window.history.replaceState({}, '', newUrl)
-
-      // Simulate form submission after a short delay to ensure doctors are loaded
-      const simulateSubmit = () => {
-        if (!isLoading) {
-          const simulatedEvent = { preventDefault: () => {} } as React.FormEvent
-          handleSubmit(simulatedEvent)
-        } else {
-          // If still loading, retry after a short delay
-          setTimeout(simulateSubmit, 500)
-        }
-      }
-
-      simulateSubmit()
-    }
-  }, [searchParams, isLoading])
-
-  // Set up speech recognition (previous implementation remains the same)
+  // Set up speech recognition
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition

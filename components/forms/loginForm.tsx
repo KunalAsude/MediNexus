@@ -29,9 +29,12 @@ const LoginForm = () => {
   const router = useRouter();
 
   useEffect(() => {
-    // Check if user is already logged in
+    // Simulate a 3-second delay for authentication check
     const checkAuthentication = async () => {
       try {
+        // Simulate network or storage retrieval delay
+        await new Promise(resolve => setTimeout(resolve, 3000));
+
         const authToken = localStorage.getItem('authToken');
         if (authToken) {
           // Optional: Add a server-side validation of the token here if needed
@@ -109,11 +112,14 @@ const LoginForm = () => {
     }
   }
 
-  // Show a loading spinner while checking authentication
+  // Show a loading spinner for 3 seconds while checking authentication
   if (isCheckingAuth) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="flex flex-col items-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+          <p className="text-gray-600">Checking authentication...</p>
+        </div>
       </div>
     );
   }

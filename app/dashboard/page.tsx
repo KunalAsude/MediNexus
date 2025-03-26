@@ -51,7 +51,7 @@ export default function Home() {
   return (
     <div className="h-screen overflow-hidden font-sans antialiased remove-scrollbar">
       {/* Header */}
-      <header className="admin-header mb-3">
+      <header className="admin-header mb-3 mt-2">
         <Link href="/" className="cursor-pointer">
           <div className="flex flex-row align-middle">
             <img
