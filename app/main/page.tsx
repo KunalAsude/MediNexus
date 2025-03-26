@@ -332,23 +332,52 @@ export default function Home() {
   }, [])
 
   const handleEmergencyClick = async () => {
-    if (isGettingLocation) return
-
+    if (isGettingLocation) return;
+  
+    // Check for geolocation support
+    if (!navigator.geolocation) {
+      toast({
+        title: "Geolocation Not Supported",
+        description: "Your device does not support location services. Please contact emergency services directly.",
+        variant: "destructive",
+      });
+      return;
+    }
+  
     try {
-      setIsGettingLocation(true)
-      setIsEmergencyActive(true)
-
+      setIsGettingLocation(true);
+      setIsEmergencyActive(true);
+  
       // Request location with high accuracy
       const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0,
-        })
-      })
-
-      const { latitude, longitude } = position.coords
-
+        navigator.geolocation.getCurrentPosition(
+          resolve, 
+          (error) => {
+            // Detailed error handling for mobile
+            switch(error.code) {
+              case error.PERMISSION_DENIED:
+                reject(new Error("Location permission denied. Please enable location services."));
+                break;
+              case error.POSITION_UNAVAILABLE:
+                reject(new Error("Location information is unavailable."));
+                break;
+              case error.TIMEOUT:
+                reject(new Error("Location request timed out."));
+                break;
+              default:
+                reject(new Error("An unknown error occurred while getting location."));
+            }
+          }, 
+          {
+            enableHighAccuracy: true,
+            timeout: 15000, // Increased timeout for mobile networks
+            maximumAge: 0,
+          }
+        );
+      });
+  
+      const { latitude, longitude } = position.coords;
+  
       // Prepare emergency data
       const emergencyData = {
         latitude,
@@ -361,44 +390,52 @@ export default function Home() {
           phone: userData?.phone || "No phone available",
           emergencyContact: userData?.emergencyContact || null,
         },
-      }
-
-      // Send emergency alert email using Resend
+      };
+  
+      // Send emergency alert email
       const emailResponse = await fetch("/api/send-emergency-alert", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(emergencyData),
-      })
-
+      });
+  
       if (!emailResponse.ok) {
-        throw new Error("Failed to send emergency alert")
+        throw new Error("Failed to send emergency alert");
       }
-
+  
       // Show success message
       toast({
         title: "Emergency Alert Sent",
         description: "Your location has been sent to the MediNexus emergency team. Help is on the way.",
-        variant: "destructive",
-      })
-
+        variant: "default", // Changed to default for better visibility
+      });
+  
       // Reset states after 5 seconds
       setTimeout(() => {
-        setIsEmergencyActive(false)
-        setIsGettingLocation(false)
-      }, 5000)
+        setIsEmergencyActive(false);
+        setIsGettingLocation(false);
+      }, 5000);
+  
     } catch (error) {
-      console.error("Error in emergency alert:", error)
+      console.error("Error in emergency alert:", error);
+      
+      // More specific error messaging
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "Could not send emergency alert. Please try again or call emergency services directly.";
+  
       toast({
-        title: "Error",
-        description: "Could not send emergency alert. Please try again or call emergency services directly.",
+        title: "Emergency Alert Error",
+        description: errorMessage,
         variant: "destructive",
-      })
-      setIsGettingLocation(false)
-      setIsEmergencyActive(false)
+      });
+  
+      setIsGettingLocation(false);
+      setIsEmergencyActive(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen font-sans antialiased no-scrollbar overflow-x-hidden">
