@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Stethoscope, Users, Send, Mic, MicOff } from "lucide-react"
+import { Stethoscope, Users, Send, Mic, MicOff, X } from "lucide-react"
 import Link from "next/link"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
@@ -12,6 +12,7 @@ import connect from "@/lib/mongodb"
 import doctorModal from "@/lib/modals/doctorModal"
 import { getAllDoctors } from "@/lib/actions/patient.actions"
 import { useRouter } from "next/navigation"
+import { analyzeSymptoms } from "@/lib/symptomAnalyzer"
 
 // Interfaces
 interface Message {
@@ -47,38 +48,6 @@ interface Doctor {
   updatedAt: string
 }
 
-// Simplified symptom to specialty mapping
-const symptomToSpecialtyMapping = {
-  // Common symptoms mapped to specialties
-  "headache": "Neurologist",
-  "migraine": "Neurologist",
-  "dizziness": "Neurologist",
-  
-  "tooth": "Dentist",
-  "teeth": "Dentist",
-  "gum": "Dentist",
-  
-  "chest pain": "Cardiologist",
-  "heart": "Cardiologist",
-  "palpitation": "Cardiologist",
-  
-  "skin": "Dermatologist",
-  "rash": "Dermatologist",
-  "acne": "Dermatologist",
-  
-  "bone": "Orthopedic",
-  "joint pain": "Orthopedic",
-  "back pain": "Orthopedic",
-  
-  "flu": "General Physician",
-  "fever": "General Physician",
-  "cold": "General Physician",
-  "cough": "General Physician",
-  "sore throat": "General Physician",
-  
-  // Add more symptoms as needed
-}
-
 export default function ChatPage() {
   // State declarations
   const [messages, setMessages] = useState<Message[]>([
@@ -104,27 +73,6 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const recognitionRef = useRef<any>(null)
-
-  // Handle URL parameters
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const searchParams = new URLSearchParams(window.location.search)
-      const messageParam = searchParams.get('message')
-      
-      if (messageParam) {
-        // Decode and set the message in the input field
-        const decodedMessage = decodeURIComponent(messageParam)
-        setInput(decodedMessage)
-        
-        // Focus the input field
-        inputRef.current?.focus()
-        
-        // Remove the message parameter from URL without page reload
-        const newUrl = window.location.pathname
-        window.history.replaceState({}, '', newUrl)
-      }
-    }
-  }, [])
 
   // Scroll to bottom of messages
   useEffect(() => {
@@ -182,44 +130,91 @@ export default function ChatPage() {
   }, [])
 
   // Analyze symptoms and find matching doctors from already loaded doctors
-  const analyzeSymptoms = (symptoms: string) => {
+  const processSymptoms = (symptoms: string) => {
     try {
-      // 1. First analyze the symptoms to determine specialty
-      const lowerSymptoms = symptoms.toLowerCase()
-      let detectedSpecialty = "General Physician" // Default
+      // 1. First analyze the symptoms to determine specialty using our comprehensive analyzer
+      const analysisResult = analyzeSymptoms(symptoms);
+      const detectedSpecialty = analysisResult.specialty;
       
-      // Check symptoms against our mapping
-      for (const [symptom, specialty] of Object.entries(symptomToSpecialtyMapping)) {
-        if (lowerSymptoms.includes(symptom)) {
-          detectedSpecialty = specialty
-          break
+      setCurrentSpecialty(detectedSpecialty);
+      
+      // 2. Filter doctors with matching specialty from the pre-loaded list
+      // First try exact match
+      let matchingDoctors = allDoctors.filter(doctor => 
+        doctor.specialization.toLowerCase() === detectedSpecialty.toLowerCase()
+      );
+      
+      // If no exact matches, try partial matches
+      if (matchingDoctors.length === 0) {
+        matchingDoctors = allDoctors.filter(doctor => 
+          doctor.specialization.toLowerCase().includes(detectedSpecialty.toLowerCase()) ||
+          detectedSpecialty.toLowerCase().includes(doctor.specialization.toLowerCase())
+        );
+      }
+      
+      // If still no matches, check for common specialty variations
+      if (matchingDoctors.length === 0) {
+        const specialtyVariations: Record<string, string[]> = {
+          "Cardiologist": ["Heart", "Cardiac"],
+          "Neurologist": ["Neuro", "Brain"],
+          "Gastroenterologist": ["Gastro", "Digestive"],
+          "Dermatologist": ["Skin", "Derma"],
+          "Orthopedist": ["Ortho", "Bone", "Joint"],
+          "Ophthalmologist": ["Eye", "Ophthalmic"],
+          "Otolaryngologist": ["ENT", "Ear", "Nose", "Throat"],
+          "Pulmonologist": ["Lung", "Respiratory", "Pulmonary"],
+          "Gynecologist": ["Gynec", "Women's Health", "OB/GYN"],
+          "Urologist": ["Urology", "Urinary"]
+        };
+        
+        const variations = specialtyVariations[detectedSpecialty] || [];
+        if (variations.length > 0) {
+          matchingDoctors = allDoctors.filter(doctor => 
+            variations.some(variation => 
+              doctor.specialization.toLowerCase().includes(variation.toLowerCase())
+            )
+          );
         }
       }
       
-      setCurrentSpecialty(detectedSpecialty)
-      
-      // 2. Filter doctors with matching specialty from the pre-loaded list
-      const matchingDoctors = allDoctors.filter(doctor => 
-        doctor.specialization.toLowerCase() === detectedSpecialty.toLowerCase()
-      )
-      console.log("Matching doctors:", matchingDoctors)
+      console.log("Matching doctors:", matchingDoctors);
       
       // Sort doctors by rating (highest first)
-      const sortedDoctors = matchingDoctors.sort((a: Doctor, b: Doctor) => b.ratings_average - a.ratings_average)
+      const sortedDoctors = matchingDoctors.sort((a: Doctor, b: Doctor) => b.ratings_average - a.ratings_average);
+      
+      // Generate a more informative response based on analysis
+      let responseText = `Based on your symptoms, I recommend seeing a ${detectedSpecialty}.`;
+      
+      // Add matched symptoms if available
+      if (analysisResult.matchedSymptoms && analysisResult.matchedSymptoms.length > 0) {
+        responseText += ` I noticed you mentioned ${analysisResult.matchedSymptoms.slice(0, 3).join(", ")}`;
+        if (analysisResult.matchedSymptoms.length > 3) {
+          responseText += ` and other symptoms`;
+        }
+        responseText += ".";
+      }
+      
+      // Add specialty description if available
+      if (analysisResult.description) {
+        responseText += ` ${analysisResult.description}`;
+      }
+      
+      // Add doctor availability
+      responseText += ` I've found ${sortedDoctors.length > 0 ? 'some excellent specialists' : 'no specialists'} for you.`;
       
       // Return top doctors and assistant response
       return {
         specialty: detectedSpecialty,
         doctors: sortedDoctors.slice(0, 5), // Get top 5 doctors
-        response: `Based on your symptoms, I recommend seeing a ${detectedSpecialty}. I've found ${sortedDoctors.length > 0 ? 'some excellent specialists' : 'no specialists'} for you.`
-      }
+        response: responseText
+      };
     } catch (error) {
-      console.error("Error analyzing symptoms:", error)
+      console.error("Error analyzing symptoms:", error);
       return {
         specialty: "General Physician",
         doctors: [],
         response: "I couldn't fully analyze your symptoms. Please consider consulting a General Physician who can help evaluate your condition."
-      }
+      };
     }
   }
 
@@ -264,7 +259,7 @@ export default function ChatPage() {
         }
         
         // Analyze symptoms and get doctors from pre-loaded list
-        const result = analyzeSymptoms(userMessage)
+        const result = processSymptoms(userMessage)
         
         // Add assistant response to chat
         const newAssistantMessage: Message = {
@@ -323,13 +318,28 @@ export default function ChatPage() {
       alert('Invalid doctor details');
       return;
     }
+    
+    // Close the doctor results sheet
+    setShowDoctorResults(false);
+    
+    // Add a message to the chat indicating booking in progress
+    const bookingMessage: Message = {
+      id: Date.now().toString(),
+      content: `I'm booking your appointment with Dr. ${doctor.name}, ${doctor.specialization}. Please wait...`,
+      role: "assistant",
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    };
+    
+    setMessages(prev => [...prev, bookingMessage]);
+    
+    // Navigate to the booking flow
     router.push('/');
     setTimeout(() => {
-      router.push('/dashboard'); 
-      setTimeout(() => {
-        router.push('/patients'); 
-      }, 500); 
-    }, 500);
+        router.push('/dashboard'); 
+        setTimeout(() => {
+          router.push('/patients'); 
+        }, 500); 
+      }, 500);
   };
 
   // Function to get availability status text from weeklyAvailability
@@ -472,7 +482,7 @@ export default function ChatPage() {
               </Button>
               <Button
                 type="submit"
-                className="rounded-full bg-teal-600 hover:bg-teal-500 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="rounded-full bg-teal-600 hover:bg-teal-500 text-white"
                 disabled={!input.trim() || isProcessing}
               >
                 <Send size={18} />
@@ -489,7 +499,17 @@ export default function ChatPage() {
           className="w-full sm:max-w-md bg-teal-900/95 backdrop-blur-sm border-l border-teal-700/30 p-0"
         >
           <SheetHeader className="p-4 border-b border-teal-700/30">
-            <SheetTitle className="text-teal-300">Recommended Doctors</SheetTitle>
+            <div className="flex justify-between items-center">
+              <SheetTitle className="text-teal-300">Recommended Doctors</SheetTitle>
+              <button 
+                onClick={() => setShowDoctorResults(false)}
+                className="text-teal-400 hover:text-teal-300"
+                title="Close doctor recommendations"
+                aria-label="Close doctor recommendations"
+              >
+                <X size={20} />
+              </button>
+            </div>
             <SheetDescription className="text-teal-400/80">
               {currentSpecialty ? `Top ${currentSpecialty} specialists for you` : "Specialists based on your symptoms"}
             </SheetDescription>
@@ -512,7 +532,7 @@ export default function ChatPage() {
                       </div>
                       <div className="flex-1">
                         <div className="flex justify-between items-start">
-                          <h4 className="font-bold text-teal-200">{doctor.name}</h4>
+                          <h4 className="font-bold text-teal-200">Dr. {doctor.name}</h4>
                           <Badge variant="outline" className="bg-yellow-500/10 text-yellow-400 border-yellow-400/30">
                             {doctor.ratings_average} ★
                           </Badge>
@@ -520,7 +540,7 @@ export default function ChatPage() {
                         <p className="text-sm text-teal-300 mt-1">{doctor.specialization}</p>
                         <div className="mt-2 text-xs text-teal-400/80">
                           <p>{doctor.experience} years experience</p>
-                          <p>{getAvailabilityText(doctor)}</p>
+                          <p>Available on {getAvailabilityText(doctor)}</p>
                           <p>{doctor.ratings_reviews} reviews</p>
                         </div>
                       </div>
@@ -538,17 +558,18 @@ export default function ChatPage() {
               ))
             ) : (
               <div className="text-center p-6">
-                <p className="text-teal-300">No specialists found</p>
-                <p className="text-teal-400/70 text-sm mt-2">Please try with different symptoms</p>
+                <p className="text-teal-300">No specialists found for your symptoms.</p>
+                <p className="text-teal-400/80 mt-2">Try describing your symptoms in more detail.</p>
               </div>
             )}
           </div>
-          <div className="p-4 text-center border-t border-teal-700/30">
-            <SheetClose asChild>
-              <Button variant="link" className="text-teal-300 hover:text-teal-200">
-                Return to chat
-              </Button>
-            </SheetClose>
+          <div className="p-4 border-t border-teal-700/30">
+            <Button 
+              onClick={() => setShowDoctorResults(false)}
+              className="w-full bg-transparent border border-teal-500 text-teal-300 hover:bg-teal-800/50"
+            >
+              Return to chat
+            </Button>
           </div>
         </SheetContent>
       </Sheet>
