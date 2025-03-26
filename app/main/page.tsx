@@ -439,9 +439,9 @@ export default function Home() {
           </a>
           <button
             onClick={handleStoreClick}
-            className="hidden md:inline bg-teal-700 hover:bg-teal-800 text-white px-4 py-2 rounded-lg transition-colors"
+            className="hidden md:inline bg-teal-700 hover:bg-teal-800 text-white px-2 py-1 rounded-lg transition-colors"
           >
-            Medical Store
+            Store
           </button>
           {isLoggedIn ? (
             <div className="relative" ref={userMenuRef}>
