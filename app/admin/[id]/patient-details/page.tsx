@@ -1022,7 +1022,8 @@ export default function PatientDetails() {
                                                     )}
 
                                                     <div className="space-y-3">
-                                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                                                        {/* Make Medication Name and Special Instructions take up full width (half each) */}
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                             <div className="space-y-1">
                                                                 <Label htmlFor={`medication-${index}`} className="text-white text-sm">
                                                                     Medication Name
@@ -1048,11 +1049,12 @@ export default function PatientDetails() {
                                                                     value={prescription.instructions}
                                                                     onChange={(e) => handlePrescriptionChange(index, e)}
                                                                     className="bg-teal-950 border-teal-800 text-white placeholder:text-teal-400 h-9"
-                                                                    placeholder="e.g., Take with food"
+                                                                    placeholder="Enter special instructions"
                                                                 />
                                                             </div>
                                                         </div>
 
+                                                        {/* Keep the other fields in a 4-column layout */}
                                                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                                                             <div className="space-y-1">
                                                                 <Label htmlFor={`dosage-${index}`} className="text-white text-sm">
@@ -1165,4 +1167,3 @@ export default function PatientDetails() {
         </div>
     )
 }
-
