@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import connect from "@/lib/mongodb"
 import doctorModal from "@/lib/modals/doctorModal"
 import { getAllDoctors } from "@/lib/actions/patient.actions"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { analyzeSymptoms } from "@/lib/symptomAnalyzer"
 
 // Interfaces
@@ -68,6 +68,7 @@ export default function ChatPage() {
   const [currentSpecialty, setCurrentSpecialty] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -78,6 +79,28 @@ export default function ChatPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
+
+  // New useEffect to handle URL parameter message
+  useEffect(() => {
+    // Get the message from URL parameters
+    const urlMessage = searchParams.get('message')
+    
+    // If there's a message, process it automatically
+    if (urlMessage) {
+      // Remove the message from URL to prevent reprocessing
+      const newSearchParams = new URLSearchParams(searchParams.toString())
+      newSearchParams.delete('message')
+      router.replace(`/chat?${newSearchParams.toString()}`)
+
+      // Set the input and automatically submit
+      setInput(urlMessage)
+      
+      // Use a timeout to ensure component is fully loaded
+      setTimeout(() => {
+        handleSubmit(new Event('submit') as any)
+      }, 500)
+    }
+  }, [searchParams, router])
 
   // Load all doctors on component mount
   useEffect(() => {
@@ -505,6 +528,7 @@ export default function ChatPage() {
                 title="Close doctor recommendations"
                 aria-label="Close doctor recommendations"
               >
+                
               </button>
             </div>
             <SheetDescription className="text-teal-400/80">
