@@ -73,6 +73,7 @@ export async function POST(request: Request) {
     const { data, error } = await resend.emails.send({
       from: 'MediNexus Emergency <onreply@medinexus.in>',
       to: ['medinexus.dev24@gmail.com'],
+      // to: [hospital.email!],
       subject: '🚨 Emergency Alert - Nearest Hospitals',
       html: `
         <!DOCTYPE html>
