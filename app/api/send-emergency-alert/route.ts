@@ -1,34 +1,79 @@
 import { Resend } from 'resend';
 import { NextResponse } from 'next/server';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
-interface EmergencyData {
+// Hospital interface 
+interface Hospital {
+  name: string;
+  address: string;
   latitude: number;
   longitude: number;
-  timestamp: string;
-  userDetails: {
-    id: string;
-    name: string;
-    email: string;
-    phone: string;
-    emergencyContact: {
-      name: string;
-      phone: string;
-      relation: string;
-    } | null;
-  };
+  distance: number;
+}
+
+// Distance calculation function
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Radius of the Earth in kilometers
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+// Fetch hospitals near the given coordinates using OpenStreetMap Nominatim API
+async function fetchNearestHospitals(latitude: number, longitude: number): Promise<Hospital[]> {
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&limit=10&` +
+      `q=hospital&viewbox=${longitude-0.5},${latitude-0.5},${longitude+0.5},${latitude+0.5}&bounded=1`
+    );
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch hospitals');
+    }
+
+    const data = await response.json();
+
+    // Process and calculate distances
+    const hospitals: Hospital[] = data
+      .filter((hospital: any) => hospital.type === 'hospital')
+      .map((hospital: any) => ({
+        name: hospital.display_name || 'Unnamed Hospital',
+        address: hospital.display_name || 'Address Not Available',
+        latitude: parseFloat(hospital.lat),
+        longitude: parseFloat(hospital.lon),
+        distance: calculateDistance(latitude, longitude, parseFloat(hospital.lat), parseFloat(hospital.lon))
+      }))
+      // Sort by distance
+      .sort((a: Hospital, b: Hospital) => a.distance - b.distance)
+      // Limit to top 5 nearest hospitals
+      .slice(0, 5);
+
+    return hospitals;
+  } catch (error) {
+    console.error('Error fetching hospitals:', error);
+    return [];
+  }
 }
 
 export async function POST(request: Request) {
+  const resend = new Resend(process.env.RESEND_API_KEY);
+
   try {
-    const body: EmergencyData = await request.json();
+    const body = await request.json();
     const { latitude, longitude, timestamp, userDetails } = body;
 
+    // Fetch nearest hospitals
+    const nearestHospitals = await fetchNearestHospitals(latitude, longitude);
+
+    // Send single email to MediNexus with hospital information
     const { data, error } = await resend.emails.send({
       from: 'MediNexus Emergency <onreply@medinexus.in>',
       to: ['medinexus.dev24@gmail.com'],
-      subject: '🚨 Emergency Alert - User Location',
+      subject: '🚨 Emergency Alert - Nearest Hospitals',
       html: `
         <!DOCTYPE html>
         <html>
@@ -84,6 +129,13 @@ export async function POST(request: Request) {
                 padding: 10px 20px;
                 text-decoration: none;
                 border-radius: 5px;
+                margin-top: 20px;
+              }
+              .hospital-section {
+                background-color: #f3f4f6;
+                border: 1px solid #d1d5db;
+                border-radius: 5px;
+                padding: 15px;
                 margin-top: 20px;
               }
               .footer {
@@ -151,10 +203,26 @@ export async function POST(request: Request) {
                   </a>
                 </div>
               </div>
+
+              <div class="section hospital-section">
+                <div class="section-title">Nearest Hospitals</div>
+                ${nearestHospitals.map((hospital, index) => `
+                  <div class="info-grid">
+                    <div class="label">Hospital ${index + 1}:</div>
+                    <div class="value">${hospital.name}</div>
+                    
+                    <div class="label">Address:</div>
+                    <div class="value">${hospital.address}</div>
+                    
+                    <div class="label">Distance:</div>
+                    <div class="value">${hospital.distance.toFixed(2)} km</div>
+                  </div>
+                `).join('')}
+              </div>
             </div>
 
             <div class="footer">
-              <p>This is an automated emergency alert from MediNexus. Please respond immediately.</p>
+              <p>This is an automated emergency alert from MediNexus. Immediate response required.</p>
             </div>
           </body>
         </html>
@@ -165,8 +233,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error }, { status: 400 });
     }
 
-    return NextResponse.json({ data });
+    return NextResponse.json({ 
+      nearestHospitals: nearestHospitals.map(hospital => ({
+        name: hospital.name,
+        address: hospital.address,
+        distance: hospital.distance
+      }))
+    });
   } catch (error) {
     return NextResponse.json({ error }, { status: 500 });
   }
-} 
+}
