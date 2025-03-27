@@ -50,6 +50,15 @@ const hideScrollbarStyles = `
     -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;  /* Firefox */
   }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
 `
 
 export interface Hospital {
@@ -175,6 +184,19 @@ export default function Home() {
   const [userData, setUserData] = useState<UserData | null>(null)
   const [isEmergencyActive, setIsEmergencyActive] = useState(false)
   const [isGettingLocation, setIsGettingLocation] = useState(false)
+  const [showInitialEffect, setShowInitialEffect] = useState(true)
+  const [showEmergencyTooltip, setShowEmergencyTooltip] = useState(false)
+
+  useEffect(() => {
+    // Show tooltip for 3 seconds when component mounts
+    setShowEmergencyTooltip(true)
+
+    const timer = setTimeout(() => {
+      setShowEmergencyTooltip(false)
+    }, 3000)
+
+    return () => clearTimeout(timer)
+  }, [])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -332,7 +354,7 @@ export default function Home() {
   }, [])
 
   const handleEmergencyClick = async () => {
-    if (isGettingLocation) return;
+    if (isGettingLocation) return
 
     // Check for geolocation support
     if (!navigator.geolocation) {
@@ -340,13 +362,13 @@ export default function Home() {
         title: "Geolocation Not Supported",
         description: "Your device does not support location services. Please contact emergency services directly.",
         variant: "destructive",
-      });
-      return;
+      })
+      return
     }
 
     try {
-      setIsGettingLocation(true);
-      setIsEmergencyActive(true);
+      setIsGettingLocation(true)
+      setIsEmergencyActive(true)
 
       // Request location with high accuracy
       const position = await new Promise<GeolocationPosition>((resolve, reject) => {
@@ -356,27 +378,27 @@ export default function Home() {
             // Detailed error handling for mobile
             switch (error.code) {
               case error.PERMISSION_DENIED:
-                reject(new Error("Location permission denied. Please enable location services."));
-                break;
+                reject(new Error("Location permission denied. Please enable location services."))
+                break
               case error.POSITION_UNAVAILABLE:
-                reject(new Error("Location information is unavailable."));
-                break;
+                reject(new Error("Location information is unavailable."))
+                break
               case error.TIMEOUT:
-                reject(new Error("Location request timed out."));
-                break;
+                reject(new Error("Location request timed out."))
+                break
               default:
-                reject(new Error("An unknown error occurred while getting location."));
+                reject(new Error("An unknown error occurred while getting location."))
             }
           },
           {
             enableHighAccuracy: true,
             timeout: 15000, // Increased timeout for mobile networks
             maximumAge: 0,
-          }
-        );
-      });
+          },
+        )
+      })
 
-      const { latitude, longitude } = position.coords;
+      const { latitude, longitude } = position.coords
 
       // Prepare emergency data
       const emergencyData = {
@@ -390,7 +412,7 @@ export default function Home() {
           phone: userData?.phone || "No phone available",
           emergencyContact: userData?.emergencyContact || null,
         },
-      };
+      }
 
       // Send emergency alert email
       const emailResponse = await fetch("/api/send-emergency-alert", {
@@ -399,10 +421,10 @@ export default function Home() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(emergencyData),
-      });
+      })
 
       if (!emailResponse.ok) {
-        throw new Error("Failed to send emergency alert");
+        throw new Error("Failed to send emergency alert")
       }
 
       // Show success message
@@ -410,32 +432,32 @@ export default function Home() {
         title: "Emergency Alert Sent",
         description: "Your location has been sent to the MediNexus emergency team. Help is on the way.",
         variant: "default", // Changed to default for better visibility
-      });
+      })
 
       // Reset states after 5 seconds
       setTimeout(() => {
-        setIsEmergencyActive(false);
-        setIsGettingLocation(false);
-      }, 5000);
-
+        setIsEmergencyActive(false)
+        setIsGettingLocation(false)
+      }, 5000)
     } catch (error) {
-      console.error("Error in emergency alert:", error);
+      console.error("Error in emergency alert:", error)
 
       // More specific error messaging
-      const errorMessage = error instanceof Error
-        ? error.message
-        : "Could not send emergency alert. Please try again or call emergency services directly.";
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Could not send emergency alert. Please try again or call emergency services directly."
 
       toast({
         title: "Emergency Alert Error",
         description: errorMessage,
         variant: "destructive",
-      });
+      })
 
-      setIsGettingLocation(false);
-      setIsEmergencyActive(false);
+      setIsGettingLocation(false)
+      setIsEmergencyActive(false)
     }
-  };
+  }
 
   return (
     <div className="min-h-screen font-sans antialiased no-scrollbar overflow-x-hidden">
@@ -478,7 +500,7 @@ export default function Home() {
             onClick={handleStoreClick}
             className="hidden md:inline bg-teal-700 hover:bg-teal-800 text-white px-2 py-1 rounded-lg transition-colors"
           >
-            Store
+            Medical Store
           </button>
           {isLoggedIn ? (
             <div className="relative" ref={userMenuRef}>
@@ -563,17 +585,27 @@ export default function Home() {
               <span className="hidden md:inline">Login</span>
             </a>
           )}
-          <button
-            onClick={handleEmergencyClick}
-            className={`p-2 rounded-full ${isEmergencyActive ? "animate-pulse" : " hover:bg-red-600"} transition-colors flex items-center gap-2 text-white`}
-            aria-label="Emergency Alert"
-          >
-            <img
-              src="https://res.cloudinary.com/kunalstorage/image/upload/v1742881523/emergency-removebg-preview_1_f4yow9.png"
-              alt="MediNexus Logo"
-              className="h-8 w-8"
-            />
-          </button>
+          <div className="relative">
+            <button
+              onClick={handleEmergencyClick}
+              className={`p-2 rounded-full ${
+                isEmergencyActive ? "animate-pulse" : ""
+              } transition-colors flex items-center gap-2 text-white`}
+              aria-label="Emergency Alert"
+            >
+              <img
+                src="https://res.cloudinary.com/kunalstorage/image/upload/v1742881523/emergency-removebg-preview_1_f4yow9.png"
+                alt="Emergency"
+                className="h-8 w-8"
+              />
+            </button>
+            {showEmergencyTooltip && (
+              <div className="absolute -bottom-10 right-0 bg-red-600 text-white text-xs font-bold py-1 px-2 rounded shadow-lg whitespace-nowrap animate-fade-in">
+                Click for emergency assistance
+                <div className="absolute -top-2 right-4 w-0 h-0 border-l-8 border-r-8 border-b-8 border-l-transparent border-r-transparent border-b-red-600"></div>
+              </div>
+            )}
+          </div>
         </nav>
       </header>
 
@@ -832,7 +864,6 @@ export default function Home() {
                   type="email"
                   placeholder="Enter your email"
                   className="bg-zinc-800 border-zinc-700 focus:border-teal-500"
-
                   onChange={(e) => console.log("")}
                 />
                 <Button type="submit" className="bg-teal-600 hover:bg-teal-500 text-white border-0">
@@ -961,7 +992,9 @@ export default function Home() {
 
           {/* Bottom Bar */}
           <div className="pt-8 border-t border-t-zinc-900 text-center">
-            <div className="flex items-center justify-center gap-1 text-sm">© {new Date().getFullYear()} MediNexus.</div>
+            <div className="flex items-center justify-center gap-1 text-sm">
+              © {new Date().getFullYear()} MediNexus.
+            </div>
           </div>
         </div>
       </footer>
