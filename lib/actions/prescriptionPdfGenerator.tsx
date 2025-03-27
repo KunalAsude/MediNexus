@@ -247,6 +247,94 @@ export const generatePrescriptionPDF = async (data: PrescriptionData): Promise<s
     doc.setFont("helvetica", "normal")
     doc.text(data.notes || "Take plenty of rest and fluids.", leftMargin + 20, notesSectionY)
 
+    // ============= VERIFICATION STAMP =============
+    // Add verified stamp/badge in the bottom right area
+    const stampCenterX = pageWidth - 50;
+    const stampCenterY = notesSectionY - 10;
+    const stampRadius = 20;
+    const verificationId = data._id?.substring(0, 8) || "VFED2025";
+    
+    // Draw outer circle
+    doc.setDrawColor(19, 78, 74); // Teal color matching the header
+    doc.setLineWidth(1.5);
+    doc.circle(stampCenterX, stampCenterY, stampRadius, 'S');
+    
+    // Draw inner circle
+    doc.setDrawColor(19, 78, 74);
+    doc.setLineWidth(0.5);
+    doc.circle(stampCenterX, stampCenterY, stampRadius - 3, 'S');
+    
+    // Add "VERIFIED" text at the top of the stamp
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(19, 78, 74); // Teal text
+    doc.setFontSize(10);
+    doc.text("VERIFIED", stampCenterX, stampCenterY - 10, { align: "center" });
+    
+    // Add verification ID
+    doc.setFontSize(7);
+    doc.text(`ID: ${verificationId}`, stampCenterX, stampCenterY - 2, { align: "center" });
+    
+    // Add current date in the stamp
+    const stampDate = new Date().toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+    doc.text(`DATE: ${stampDate}`, stampCenterX, stampCenterY + 3, { align: "center" });
+    
+    // Add "OFFICIAL MEDICAL DOCUMENT" at bottom of stamp
+    doc.setFontSize(5);
+    doc.text("OFFICIAL MEDICAL DOCUMENT", stampCenterX, stampCenterY + 10, { align: "center" });
+    
+    // Draw a medical seal icon inside the stamp (simplified caduceus symbol)
+    // Central staff
+    doc.setDrawColor(19, 78, 74);
+    doc.setLineWidth(0.8);
+    doc.line(stampCenterX, stampCenterY - 1, stampCenterX, stampCenterY + 6);
+    
+    // Draw wings/snakes
+    const drawWing = (directionFactor: number) => {
+      const wingStartX = stampCenterX;
+      const wingStartY = stampCenterY;
+      
+      doc.setLineWidth(0.6);
+      // Draw curved line representing a wing/snake
+      doc.line(
+        wingStartX, 
+        wingStartY, 
+        wingStartX + (3 * directionFactor), 
+        wingStartY - 2
+      );
+      
+      doc.line(
+        wingStartX + (3 * directionFactor), 
+        wingStartY - 2,
+        wingStartX + (5 * directionFactor), 
+        wingStartY
+      );
+      
+      doc.line(
+        wingStartX + (5 * directionFactor), 
+        wingStartY,
+        wingStartX + (3 * directionFactor), 
+        wingStartY + 2
+      );
+      
+      doc.line(
+        wingStartX + (3 * directionFactor), 
+        wingStartY + 2,
+        wingStartX, 
+        wingStartY + 4
+      );
+    };
+    
+    // Draw left and right wings
+    drawWing(-1); // Left wing
+    drawWing(1);  // Right wing
+    
+    // Reset text color to black after drawing the stamp
+    doc.setTextColor(0, 0, 0);
+
     // Add footer with blue background
     doc.setFillColor(19, 78, 74)
     doc.rect(0, pageHeight - footerHeight, pageWidth, footerHeight, "F")
@@ -259,7 +347,7 @@ export const generatePrescriptionPDF = async (data: PrescriptionData): Promise<s
     doc.text(`+91 98765-43210`, 15, pageHeight - 5)
 
     // Copyright info in the center
-    const copyrightText = "© 2025 Medinexus. All rights reserved."
+    const copyrightText = " 2025 Medinexus. All rights reserved."
     doc.text(copyrightText, pageWidth / 2, pageHeight - 5, { align: "center" })
 
     // Email on the right side - properly aligned
