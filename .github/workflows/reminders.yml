@@ -1,33 +1,33 @@
-name: Hourly Appointment Reminders
+# name: Hourly Appointment Reminders
 
-on:
-  schedule:
-    - cron: '0 * * * *'  # Run every hour
-  workflow_dispatch:     # Allow manual triggering
+# on:
+#   schedule:
+#     - cron: '0 * * * *'  # Run every hour
+#   workflow_dispatch:     # Allow manual triggering
 
-jobs:
-  send-reminders:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger Reminder API
-        id: api-call
-        uses: fjogeleit/http-request-action@v1
-        with:
-          url: 'https://medinexus.in/api/reminders'
-          method: 'GET'
-          timeout: 30000
-          customHeaders: '{"Authorization": "Bearer ${{ secrets.REMINDER_API_TOKEN }}"}'
-          retry: true
-          retryWait: 5000
+# jobs:
+#   send-reminders:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Trigger Reminder API
+#         id: api-call
+#         uses: fjogeleit/http-request-action@v1
+#         with:
+#           url: 'https://medinexus.in/api/reminders'
+#           method: 'GET'
+#           timeout: 30000
+#           customHeaders: '{"Authorization": "Bearer ${{ secrets.REMINDER_API_TOKEN }}"}'
+#           retry: true
+#           retryWait: 5000
       
-      - name: Log Response
-        run: |
-          echo "API Response Status - ${{ steps.api-call.outputs.status }}"
-          echo "API Response Body - ${{ steps.api-call.outputs.response }}"
+#       - name: Log Response
+#         run: |
+#           echo "API Response Status - ${{ steps.api-call.outputs.status }}"
+#           echo "API Response Body - ${{ steps.api-call.outputs.response }}"
       
-      - name: Check API Response
-        if: ${{ steps.api-call.outputs.status >= 400 }}
-        run: |
-          echo "API call failed with status ${{ steps.api-call.outputs.status }}"
-          echo "Response: ${{ steps.api-call.outputs.response }}"
-          exit 1
+#       - name: Check API Response
+#         if: ${{ steps.api-call.outputs.status >= 400 }}
+#         run: |
+#           echo "API call failed with status ${{ steps.api-call.outputs.status }}"
+#           echo "Response: ${{ steps.api-call.outputs.response }}"
+#           exit 1
