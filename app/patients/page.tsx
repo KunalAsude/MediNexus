@@ -1,8 +1,6 @@
 import PatientForm from "@/components/forms/PatientForm";
-import { Button } from "@/components/ui/button";
 import PasskeyModal from "@/components/ui/PasskeyModal";
 import Image from "next/image";
-import Link from "next/link";
 
 
 
@@ -15,7 +13,7 @@ const Home = ({ searchParams }: SearchParamProps) => {
 
     
     <div className="flex h-screen max-h-screen">
-      {isAdmin && <PasskeyModal/>}
+      {isAdmin && <PasskeyModal open={isAdmin} onClose={() => {}}/>}
       <section className="container remove-scroll-bar my-auto">
         <div className="sub-container max-w-[496px]">
         <div className="flex flex-row align-middle">
