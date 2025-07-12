@@ -28,6 +28,6 @@
 #       - name: Check API Response
 #         if: ${{ steps.api-call.outputs.status >= 400 }}
 #         run: |
-#           echo "API call failed with status ${{ steps.api-call.outputs.status }}"
+#           echo " API call failed with status ${{ steps.api-call.outputs.status }}"
 #           echo "Response: ${{ steps.api-call.outputs.response }}"
 #           exit 1
