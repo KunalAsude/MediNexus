@@ -1,9 +1,8 @@
 # 🏥 MediNexus - AI-Powered Healthcare Ecosystem
 
-[![Build Status](https://github.com/KunalAsude/medinexus/actions/workflows/ci.yml/badge.svg)](https://github.com/KunalAsude/medinexus/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green?logo=node.js)](https://nodejs.org/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-7.0-green?logo=mongodb)](https://www.mongodb.com/)
 [![AI Powered](https://img.shields.io/badge/AI-Powered-purple?logo=openai)](https://together.ai/)
