@@ -78,7 +78,9 @@ export const PatientFormValidation = z.object({
 export const CreateAppointmentSchema = z.object({
   primaryPhysician: z.string().min(2, "Select at least one doctor"),
   
-  schedule: z.coerce.date(),
+  schedule: z.coerce.date().refine((date) => date >= new Date(new Date().setHours(0, 0, 0, 0)), {
+    message: "Appointment date cannot be in the past",
+  }),
   reason: z
     .string()
     .min(2, "Reason must be at least 2 characters")
@@ -89,7 +91,9 @@ export const CreateAppointmentSchema = z.object({
 
 export const ScheduleAppointmentSchema = z.object({
   primaryPhysician: z.string().min(2, "Select at least one doctor"),
-  schedule: z.coerce.date(),
+  schedule: z.coerce.date().refine((date) => date >= new Date(new Date().setHours(0, 0, 0, 0)), {
+    message: "Appointment date cannot be in the past",
+  }),
   reason: z.string().optional(),
   note: z.string().optional(),
   cancellationReason: z.string().optional(),

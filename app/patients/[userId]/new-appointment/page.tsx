@@ -4,7 +4,8 @@ import { useEffect, useState } from "react"
 import AppointmentForm from "@/components/forms/Appointment"
 import { Card, CardContent } from "@/components/ui/card"
 import { getDoctorsByHospital, getRegisteredPatient } from "@/lib/actions/patient.actions"
-import { Star, Search, ChevronDown, ChevronUp, Clock, Calendar, Phone, Mail, Award } from "lucide-react"
+import { getReviewsByDoctor } from "@/lib/actions/review.actions"
+import { Star, Search, ChevronDown, ChevronUp, Phone, Mail, Award, ChevronLeft, ChevronRight, MessageSquare } from "lucide-react"
 import Image from "next/image"
 import { Input } from "@/components/ui/input"
 import { useSelector } from "react-redux"
@@ -22,6 +23,13 @@ export default function NewAppointment({ params }: { params: { userId: string } 
   const [isSmallLoading, setIsSmallLoading] = useState(false)
   const [selectedDoctor, setSelectedDoctor] = useState<any>(null)
   const [expandedDoctorId, setExpandedDoctorId] = useState<string | null>(null)
+
+  // Reviews state: keyed by doctorId
+  const [doctorReviews, setDoctorReviews] = useState<Record<string, any[]>>({})
+  const [reviewsLoading, setReviewsLoading] = useState<Record<string, boolean>>({})
+  const [reviewPage, setReviewPage] = useState<Record<string, number>>({})
+  const [showReviews, setShowReviews] = useState<Record<string, boolean>>({})
+  const REVIEWS_PER_PAGE = 10
 
   // Store userId in local storage and retrieve it when needed
   useEffect(() => {
@@ -94,9 +102,25 @@ export default function NewAppointment({ params }: { params: { userId: string } 
     } else {
       setExpandedDoctorId(doctorId)
       const doctor = doctors.find((d) => d._id === doctorId)
-      if (doctor) {
-        setSelectedDoctor(doctor)
-      }
+      if (doctor) setSelectedDoctor(doctor)
+    }
+  }
+
+  const handleToggleReviews = (e: React.MouseEvent, doctorId: string) => {
+    e.stopPropagation()
+    const nowShowing = !showReviews[doctorId]
+    setShowReviews((prev) => ({ ...prev, [doctorId]: nowShowing }))
+
+    // Fetch reviews only once
+    if (nowShowing && !doctorReviews[doctorId]) {
+      setReviewsLoading((prev) => ({ ...prev, [doctorId]: true }))
+      getReviewsByDoctor(doctorId)
+        .then((reviews) => {
+          setDoctorReviews((prev) => ({ ...prev, [doctorId]: reviews || [] }))
+          setReviewPage((prev) => ({ ...prev, [doctorId]: 1 }))
+        })
+        .catch(() => setDoctorReviews((prev) => ({ ...prev, [doctorId]: [] })))
+        .finally(() => setReviewsLoading((prev) => ({ ...prev, [doctorId]: false })))
     }
   }
 
@@ -108,6 +132,22 @@ export default function NewAppointment({ params }: { params: { userId: string } 
     const formattedHour = hour % 12 || 12
     return `${formattedHour}:${minutes} ${ampm}`
   }
+
+  // Format date helper
+  const formatDate = (dateString: string) => {
+    try {
+      return new Date(dateString).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
+    } catch { return "" }
+  }
+
+  // Star row helper
+  const StarRow = ({ rating }: { rating: number }) => (
+    <div className="flex gap-0.5">
+      {[1,2,3,4,5].map((s) => (
+        <Star key={s} className={`h-3 w-3 ${s <= rating ? "fill-yellow-400 text-yellow-400" : "text-teal-700 fill-teal-900"}`} />
+      ))}
+    </div>
+  )
 
   return (
     <div className="flex flex-col lg:flex-row h-screen max-h-screen w-full bg-[linear-gradient(to_right,#012621,#002A1C)]">
@@ -210,30 +250,81 @@ export default function NewAppointment({ params }: { params: { userId: string } 
                           <p className="text-sm text-white">{doctor?.ratings_reviews} reviews</p>
                         </div>
 
-                        <div className="">
-                          {/* <div className="grid grid-cols-1 gap-2">
-                            {Object.entries(doctor?.weeklyAvailability || {}).map(([day, slots]: [string, any]) =>
-                              slots && slots.length > 0 ? (
-                                <div key={day} className="bg-teal-900/30 rounded-md p-2">
-                                  <p className="text-xs text-teal-200 capitalize font-medium mb-1">{day}</p>
-                                  <div className="flex flex-wrap gap-1">
-                                    {slots.map((slot: any, index: number) => (
-                                      <div key={index} className="flex items-center bg-teal-800/30 rounded px-2 py-1">
-                                        <Clock className="h-3 w-3 text-teal-300 mr-1" />
-                                        <span className="text-xs text-white">
-                                          {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
-                                        </span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              ) : null,
-                            )}
+                        {/* Reviews Section */}
+                        <div className="mt-1">
+                          <button
+                            onClick={(e) => handleToggleReviews(e, doctor._id)}
+                            className="flex items-center gap-2 text-sm font-medium text-teal-300 hover:text-teal-100 transition-colors"
+                          >
+                            <MessageSquare className="h-4 w-4" />
+                            {showReviews[doctor._id] ? "Hide Reviews" : "See Reviews"}
+                          </button>
 
-                            {Object.values(doctor?.weeklyAvailability || {}).every(
-                              (slots: any) => !slots || slots.length === 0,
-                            ) && <p className="text-xs text-teal-400/60">No regular availability schedule set.</p>}
-                          </div> */}
+                          {showReviews[doctor._id] && (
+                            <div className="mt-2">
+                              {reviewsLoading[doctor._id] ? (
+                                <p className="text-xs text-teal-400 text-center py-3">Loading reviews...</p>
+                              ) : (doctorReviews[doctor._id] || []).length === 0 ? (
+                                <p className="text-xs text-teal-500 text-center py-3">No reviews yet for this doctor.</p>
+                              ) : (() => {
+                                const allReviews = doctorReviews[doctor._id]
+                                const currentPage = reviewPage[doctor._id] || 1
+                                const totalPages = Math.ceil(allReviews.length / REVIEWS_PER_PAGE)
+                                const pageReviews = allReviews.slice((currentPage - 1) * REVIEWS_PER_PAGE, currentPage * REVIEWS_PER_PAGE)
+                                const avgRating = allReviews.reduce((s, r) => s + r.rating, 0) / allReviews.length
+
+                                return (
+                                  <div className="space-y-2">
+                                    {/* Average rating bar */}
+                                    <div className="flex items-center gap-2 bg-teal-900/30 rounded-md px-3 py-2 mb-3">
+                                      <span className="text-yellow-400 font-bold text-base">{avgRating.toFixed(1)}</span>
+                                      <StarRow rating={Math.round(avgRating)} />
+                                      <span className="text-xs text-teal-400 ml-1">({allReviews.length})</span>
+                                    </div>
+
+                                    {/* Review cards */}
+                                    <div className="space-y-2 max-h-72 overflow-y-auto remove-scrollbar pr-1">
+                                      {pageReviews.map((review: any) => (
+                                        <div key={review._id} className="bg-teal-900/20 border border-teal-800/40 rounded-md p-3 space-y-1">
+                                          <div className="flex items-center justify-between">
+                                            <p className="text-xs font-medium text-teal-100">{review.patientName}</p>
+                                            <p className="text-xs text-teal-500">{formatDate(review.createdAt)}</p>
+                                          </div>
+                                          <StarRow rating={review.rating} />
+                                          <p className="text-xs text-teal-300 leading-relaxed">{review.description}</p>
+                                        </div>
+                                      ))}
+                                    </div>
+
+                                    {/* Pagination */}
+                                    {totalPages > 1 && (
+                                      <div className="flex items-center justify-between pt-2">
+                                        <button
+                                          onClick={(e) => { e.stopPropagation(); setReviewPage((prev) => ({ ...prev, [doctor._id]: Math.max(1, currentPage - 1) })) }}
+                                          disabled={currentPage === 1}
+                                          className="p-1 rounded text-teal-300 disabled:opacity-30 hover:bg-teal-800/40 transition-colors"
+                                        >
+                                          <ChevronLeft className="h-4 w-4" />
+                                        </button>
+                                        <span className="text-xs text-teal-400">{currentPage} / {totalPages}</span>
+                                        <button
+                                          onClick={(e) => { e.stopPropagation(); setReviewPage((prev) => ({ ...prev, [doctor._id]: Math.min(totalPages, currentPage + 1) })) }}
+                                          disabled={currentPage === totalPages}
+                                          className="p-1 rounded text-teal-300 disabled:opacity-30 hover:bg-teal-800/40 transition-colors"
+                                        >
+                                          <ChevronRight className="h-4 w-4" />
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+                                )
+                              })()}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="">
+                          {/* weekly availability (commented out) */}
                         </div>
                       </div>
                     </div>
