@@ -520,3 +520,18 @@ export const getPrescriptionByAppointmentId = async (appointmentId: string) => {
     return { success: false, message: "Failed to fetch prescription", error: error.message };
   }
 };
+
+export const getPrescriptionsExistenceForAppointments = async (appointmentIds: string[]): Promise<Record<string, boolean>> => {
+  try {
+    await connect();
+    const prescriptions = await Prescription.find({ appointmentId: { $in: appointmentIds } }).select("appointmentId").lean();
+    const existsMap: Record<string, boolean> = {};
+    (prescriptions as any[]).forEach((p) => {
+      existsMap[p.appointmentId] = true;
+    });
+    return existsMap;
+  } catch (error) {
+    console.error("Error checking prescriptions existence:", error);
+    return {};
+  }
+};

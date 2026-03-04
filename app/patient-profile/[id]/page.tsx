@@ -33,11 +33,14 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { toast } from "@/hooks/use-toast"
 import { getRegisteredPatient, getUser } from "@/lib/actions/patient.actions"
 import { useParams } from "next/navigation"
-import { cancelAppointment, getPrescription, getPrescriptionByAppointmentId, getUserAppointments } from "@/lib/actions/appointment.actions"
+import { cancelAppointment, getPrescription, getPrescriptionByAppointmentId, getPrescriptionsExistenceForAppointments, getUserAppointments } from "@/lib/actions/appointment.actions"
+import { getReviewsExistenceForAppointments } from "@/lib/actions/review.actions"
 import axios from "axios"
 import AppointmentModal from "@/components/ui/AppointmentModal"
 import { CancellationModal } from "@/components/ui/cancellation-modal"
 import { generatePrescriptionPDF } from "@/lib/actions/prescriptionPdfGenerator"
+import { ReviewModal } from "@/components/ui/ReviewModal"
+import { MessageSquare } from "lucide-react"
 
 // Appointment Card Component
 function AppointmentCard({
@@ -48,6 +51,9 @@ function AppointmentCard({
   onManageVirtual,
   onCancel,
   onDownloadPrescription,
+  onAddReview,
+  hasPrescription = false,
+  hasReview = false,
   isPast = false,
 }) {
   return (
@@ -72,11 +78,7 @@ function AppointmentCard({
 
         {/* Right side with status and actions */}
         <div className="flex flex-col items-end">
-          {" "}
-          {/* Added items-end to align everything to the right */}
           <div className="flex flex-wrap gap-2 justify-end">
-            {" "}
-            {/* Added justify-end for badge alignment */}
             {appointment?.status === "scheduled" && (
               <Badge className={`${appointment.isVirtual ? "bg-blue-600" : "bg-green-600"} border-none`}>
                 {appointment.isVirtual ? "Virtual" : "In-Person"}
@@ -85,15 +87,13 @@ function AppointmentCard({
             {appointment?.status === "completed" && <Badge className="bg-green-600 border-none">Completed</Badge>}
             {appointment?.status === "cancelled" && <Badge className="bg-red-600 border-none">Cancelled</Badge>}
           </div>
-          {/* Show cancellation reason if cancelled - aligned right */}
+          {/* Show cancellation reason if cancelled */}
           {appointment?.status === "cancelled" && appointment.cancellationReason && (
             <p className="text-xs text-red-300 text-right mt-1">Reason: {appointment.cancellationReason}</p>
           )}
-          {/* Action buttons - only show for scheduled appointments that aren't in the past */}
+          {/* Upcoming scheduled appointment actions */}
           {appointment?.status === "scheduled" && !isPast && (
             <div className="flex flex-wrap gap-2 mt-2 justify-end">
-              {" "}
-              {/* Added justify-end for button alignment */}
               {appointment.isVirtual && (
                 <Button
                   variant="outline"
@@ -125,17 +125,38 @@ function AppointmentCard({
               </Button>
             </div>
           )}
+          {/* Past appointment actions */}
           {isPast && appointment?.status !== "cancelled" && (
-            <div className="flex flex-wrap gap-2 mt-2 justify-end">
-              <Button
-                variant="outline"
-                size="sm"
-                className="bg-blue-800/70 hover:bg-blue-900 border-none text-white h-8"
-                onClick={() => onDownloadPrescription && onDownloadPrescription(appointment)}  
-              >
-                <Download className="h-3 w-3 mr-1" />
-                Download Prescription
-              </Button>
+            <div className="flex flex-col items-end gap-2 mt-2">
+              {/* Show Download Prescription only if prescription exists */}
+              {hasPrescription && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="bg-blue-800/70 hover:bg-blue-900 border-none text-white h-8"
+                  onClick={() => onDownloadPrescription && onDownloadPrescription(appointment)}
+                >
+                  <Download className="h-3 w-3 mr-1" />
+                  Download Prescription
+                </Button>
+              )}
+              {/* Show Add Review only for completed appointments that haven't been reviewed yet */}
+              {appointment?.status === "completed" && !hasReview && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="bg-teal-700/70 hover:bg-teal-700 border border-teal-500 text-white h-8"
+                  onClick={() => onAddReview && onAddReview(appointment)}
+                >
+                  <MessageSquare className="h-3 w-3 mr-1" />
+                  Add Review
+                </Button>
+              )}
+              {appointment?.status === "completed" && hasReview && (
+                <p className="text-xs text-teal-400 flex items-center gap-1">
+                  <MessageSquare className="h-3 w-3" /> Review submitted
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -159,6 +180,12 @@ export default function PatientProfile() {
   const params = useParams()
   const userId = params?.id
 
+  // Review state
+  const [reviewModal, setReviewModal] = useState(false)
+  const [reviewAppointment, setReviewAppointment] = useState(null)
+  const [prescriptionExists, setPrescriptionExists] = useState<Record<string, boolean>>({})
+  const [reviewExists, setReviewExists] = useState<Record<string, boolean>>({})
+
   // Fetch patient data and appointments
   useEffect(() => {
     const fetchPatient = async () => {
@@ -171,7 +198,22 @@ export default function PatientProfile() {
 
           if (patientData?.userId) {
             const appointmentData = await getUserAppointments(patientData.userId)
-            setAppointments(appointmentData?.documents || [])
+            const docs = appointmentData?.documents || []
+            setAppointments(docs)
+
+            // Batch-check prescription and review existence for past/completed appointments
+            const pastIds = docs
+              .filter((a) => a.status === "completed" || new Date(a.timeSlot?.startTime) < new Date())
+              .map((a) => a._id)
+
+            if (pastIds.length > 0) {
+              const [prescMap, revMap] = await Promise.all([
+                getPrescriptionsExistenceForAppointments(pastIds),
+                getReviewsExistenceForAppointments(pastIds),
+              ])
+              setPrescriptionExists(prescMap)
+              setReviewExists(revMap)
+            }
           }
         }
       } catch (error) {
@@ -190,6 +232,15 @@ export default function PatientProfile() {
       fetchPatient()
     }
   }, [userId])
+
+  const handleAddReview = (appointment) => {
+    setReviewAppointment(appointment)
+    setReviewModal(true)
+  }
+
+  const handleReviewSuccess = (appointmentId: string) => {
+    setReviewExists((prev) => ({ ...prev, [appointmentId]: true }))
+  }
 
   const joinMeeting = (appointment) => {
     if (appointment?.meetingLink) {
@@ -678,6 +729,9 @@ export default function PatientProfile() {
                         copyMeetingLink={copyMeetingLink}
                         isPast={true}
                         onDownloadPrescription={handleDownloadPrescription}
+                        onAddReview={handleAddReview}
+                        hasPrescription={!!prescriptionExists[appointment._id]}
+                        hasReview={!!reviewExists[appointment._id]}
                       />
                     ))
                   ) : (
@@ -879,6 +933,20 @@ export default function PatientProfile() {
             )}
           </div>
         </AppointmentModal>
+      )}
+
+      {/* Review Modal */}
+      {reviewModal && reviewAppointment && (
+        <ReviewModal
+          isOpen={reviewModal}
+          onClose={() => setReviewModal(false)}
+          appointmentId={reviewAppointment._id}
+          doctorId={reviewAppointment.primaryPhysician?.id || ""}
+          doctorName={reviewAppointment.primaryPhysician?.name || "Doctor"}
+          patientId={patient?._id || ""}
+          patientName={patient?.name || "Patient"}
+          onSuccess={() => handleReviewSuccess(reviewAppointment._id)}
+        />
       )}
 
       {/* Cancel Appointment Modal */}

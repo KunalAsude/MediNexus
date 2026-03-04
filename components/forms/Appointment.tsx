@@ -16,6 +16,8 @@ import type { Appointment } from "@/types/appwrite.types"
 import { useSelector } from "react-redux"
 import { Loader2 } from "lucide-react"
 import { useWatch } from "react-hook-form"
+import { DoctorReviewsModal } from "@/components/ui/DoctorReviewsModal"
+import { MessageSquare } from "lucide-react"
 
 export enum FormFieldTypes {
   INPUT = "input",
@@ -104,6 +106,7 @@ const AppointmentForm = ({ userId, patientId, patientName, type, appointment, se
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null)
   const [bookedAppointments, setBookedAppointments] = useState<any[]>([])
   const [appointmentType, setAppointmentType] = useState(false) // false = in-person, true = virtual
+  const [reviewsModal, setReviewsModal] = useState(false)
 
   const AppointmentFormValidation = getAppointmentSchema(type)
 
@@ -530,7 +533,19 @@ const AppointmentForm = ({ userId, patientId, patientName, type, appointment, se
     }
   }
 
+  // Derive selected doctor for review modal
+  const selectedDoctorForReview = (() => {
+    try {
+      if (!primaryPhysician) return null
+      const doc = JSON.parse(primaryPhysician)
+      return doctors.find((d) => d._id === doc.id) || null
+    } catch {
+      return null
+    }
+  })()
+
   return (
+    <>
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 flex-1">
         {type !== "cancel" && (
@@ -558,6 +573,18 @@ const AppointmentForm = ({ userId, patientId, patientName, type, appointment, se
                     ))
                   )}
                 </CustomFormField>
+
+                {/* View Reviews button — shown when a doctor is selected */}
+                {selectedDoctorForReview && (
+                  <button
+                    type="button"
+                    onClick={() => setReviewsModal(true)}
+                    className="flex items-center gap-1.5 text-xs text-teal-400 hover:text-teal-200 transition-colors -mt-2"
+                  >
+                    <MessageSquare className="h-3.5 w-3.5" />
+                    View patient reviews for Dr. {selectedDoctorForReview.name}
+                  </button>
+                )}
 
                 <CustomFormField
                   fieldType={FormFieldTypes.DATE_PICKER}
@@ -707,6 +734,17 @@ const AppointmentForm = ({ userId, patientId, patientName, type, appointment, se
         </SubmitButton>
       </form>
     </Form>
+
+    {/* Doctor Reviews Modal */}
+    {reviewsModal && selectedDoctorForReview && (
+      <DoctorReviewsModal
+        isOpen={reviewsModal}
+        onClose={() => setReviewsModal(false)}
+        doctorId={selectedDoctorForReview._id}
+        doctorName={selectedDoctorForReview.name}
+      />
+    )}
+  </>
   )
 }
 
